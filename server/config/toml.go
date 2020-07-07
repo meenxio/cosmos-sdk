@@ -47,6 +47,10 @@ halt-time = {{ .BaseConfig.HaltTime }}
 # InterBlockCache enables inter-block caching.
 inter-block-cache = {{ .BaseConfig.InterBlockCache }}
 
+# FIXME Add description here
+snapshot-interval = {{ .BaseConfig.SnapshotInterval }}
+snapshot-keep-recent = {{ .BaseConfig.SnapshotKeepRecent }}
+
 ###############################################################################
 ###                         Telemetry Configuration                         ###
 ###############################################################################

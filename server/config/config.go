@@ -40,6 +40,14 @@ type BaseConfig struct {
 	// Note: Commitment of state will be attempted on the corresponding block.
 	HaltTime uint64 `mapstructure:"halt-time"`
 
+	// SnapshotInterval sets the interval at which state sync snapshots are taken.
+	// 0 disables snapshots. Must be a multiple of PruningKeepEvery.
+	SnapshotInterval uint64 `mapstructure:"snapshot-interval"`
+
+	// SnapshotKeep sets the number of recent state sync snapshots to keep.
+	// 0 keeps all snapshots.
+	SnapshotKeepRecent uint32 `mapstructure:"snapshot-keep-recent"`
+
 	// InterBlockCache enables inter-block caching.
 	InterBlockCache bool `mapstructure:"inter-block-cache"`
 }
@@ -115,12 +123,14 @@ func (c *Config) GetMinGasPrices() sdk.DecCoins {
 func DefaultConfig() *Config {
 	return &Config{
 		BaseConfig: BaseConfig{
-			MinGasPrices:      defaultMinGasPrices,
-			InterBlockCache:   true,
-			Pruning:           storetypes.PruningOptionDefault,
-			PruningKeepRecent: "0",
-			PruningKeepEvery:  "0",
-			PruningInterval:   "0",
+			MinGasPrices:       defaultMinGasPrices,
+			InterBlockCache:    true,
+			Pruning:            storetypes.PruningOptionDefault,
+			PruningKeepRecent:  "0",
+			PruningKeepEvery:   "0",
+			PruningInterval:    "0",
+			SnapshotInterval:   0,
+			SnapshotKeepRecent: 2,
 		},
 		Telemetry: telemetry.Config{
 			Enabled:      false,
@@ -150,14 +160,16 @@ func GetConfig(v *viper.Viper) Config {
 
 	return Config{
 		BaseConfig: BaseConfig{
-			MinGasPrices:      v.GetString("minimum-gas-prices"),
-			InterBlockCache:   v.GetBool("inter-block-cache"),
-			Pruning:           v.GetString("pruning"),
-			PruningKeepRecent: v.GetString("pruning-keep-recent"),
-			PruningKeepEvery:  v.GetString("pruning-keep-every"),
-			PruningInterval:   v.GetString("pruning-interval"),
-			HaltHeight:        v.GetUint64("halt-height"),
-			HaltTime:          v.GetUint64("halt-time"),
+			MinGasPrices:       v.GetString("minimum-gas-prices"),
+			InterBlockCache:    v.GetBool("inter-block-cache"),
+			Pruning:            v.GetString("pruning"),
+			PruningKeepRecent:  v.GetString("pruning-keep-recent"),
+			PruningKeepEvery:   v.GetString("pruning-keep-every"),
+			PruningInterval:    v.GetString("pruning-interval"),
+			HaltHeight:         v.GetUint64("halt-height"),
+			HaltTime:           v.GetUint64("halt-time"),
+			SnapshotInterval:   v.GetUint64("snapshot-interval"),
+			SnapshotKeepRecent: v.GetUint32("snapshot-keep-recent"),
 		},
 		Telemetry: telemetry.Config{
 			ServiceName:             v.GetString("telemetry.service-name"),
