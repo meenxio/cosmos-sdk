@@ -8,13 +8,11 @@ import (
 var _ sdk.Msg = &MsgVerifyInvariant{}
 
 // NewMsgVerifyInvariant creates a new MsgVerifyInvariant object
-func NewMsgVerifyInvariant(sender sdk.AccAddress, invariantModuleName,
-	invariantRoute string) *MsgVerifyInvariant {
-
+func NewMsgVerifyInvariant(sender sdk.AccAddress, invModeName, invRoute string) *MsgVerifyInvariant {
 	return &MsgVerifyInvariant{
 		Sender:              sender,
-		InvariantModuleName: invariantModuleName,
-		InvariantRoute:      invariantRoute,
+		InvariantModuleName: invModeName,
+		InvariantRoute:      invRoute,
 	}
 }
 
@@ -26,7 +24,7 @@ func (msg MsgVerifyInvariant) GetSigners() []sdk.AccAddress { return []sdk.AccAd
 
 // GetSignBytes gets the sign bytes for the msg MsgVerifyInvariant
 func (msg MsgVerifyInvariant) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
+	bz := ModuleCdc.MustMarshalJSON(&msg)
 	return sdk.MustSortJSON(bz)
 }
 

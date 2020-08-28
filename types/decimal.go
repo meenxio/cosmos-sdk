@@ -208,6 +208,10 @@ func (d Dec) Abs() Dec          { return Dec{new(big.Int).Abs(d.i)} } // absolut
 
 // BigInt returns a copy of the underlying big.Int.
 func (d Dec) BigInt() *big.Int {
+	if d.IsNil() {
+		return nil
+	}
+
 	copy := new(big.Int)
 	return copy.Set(d.i)
 }
@@ -700,7 +704,8 @@ func (d *Dec) MarshalTo(data []byte) (n int, err error) {
 	if d.i == nil {
 		d.i = new(big.Int)
 	}
-	if len(d.i.Bytes()) == 0 {
+
+	if d.i.Cmp(zeroInt) == 0 {
 		copy(data, []byte{0x30})
 		return 1, nil
 	}

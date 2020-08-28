@@ -1,4 +1,4 @@
-package cli
+package cli_test
 
 import (
 	"context"
@@ -9,17 +9,18 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/tests"
+	"github.com/cosmos/cosmos-sdk/testutil"
+	"github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 )
 
 func TestGetMigrationCallback(t *testing.T) {
-	for _, version := range GetMigrationVersions() {
-		require.NotNil(t, GetMigrationCallback(version))
+	for _, version := range cli.GetMigrationVersions() {
+		require.NotNil(t, cli.GetMigrationCallback(version))
 	}
 }
 
 func TestMigrateGenesis(t *testing.T) {
-	home, cleanup := tests.NewTestCaseDir(t)
+	home, cleanup := testutil.NewTestCaseDir(t)
 	t.Cleanup(cleanup)
 
 	cdc := makeCodec()
@@ -27,11 +28,10 @@ func TestMigrateGenesis(t *testing.T) {
 	genesisPath := path.Join(home, "genesis.json")
 	target := "v0.36"
 
-	cmd := MigrateGenesisCmd()
-	cmd.SetErr(ioutil.Discard)
-	cmd.SetOut(ioutil.Discard)
+	cmd := cli.MigrateGenesisCmd()
+	_ = testutil.ApplyMockIODiscardOutErr(cmd)
 
-	clientCtx := client.Context{}.WithJSONMarshaler(cdc)
+	clientCtx := client.Context{}.WithLegacyAmino(cdc)
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 
