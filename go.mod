@@ -20,7 +20,7 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/gorilla/handlers v1.5.0
 	github.com/gorilla/mux v1.8.0
-	github.com/grpc-ecosystem/grpc-gateway v1.14.7
+	github.com/grpc-ecosystem/grpc-gateway v1.15.2
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/magiconair/properties v1.8.2
 	github.com/mattn/go-isatty v0.0.12
@@ -45,7 +45,7 @@ require (
 	github.com/tendermint/tm-db v0.6.2
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987
-	google.golang.org/grpc v1.31.1
+	google.golang.org/grpc v1.32.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.3.0
 )
