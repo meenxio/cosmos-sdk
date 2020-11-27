@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 )
@@ -56,7 +58,7 @@ func ValidatorCommand() *cobra.Command {
 
 	cmd.Flags().StringP(flags.FlagNode, "n", "tcp://localhost:26657", "Node to connect to")
 	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|kwallet|pass|test)")
-	cmd.Flags().Int(flags.FlagPage, 0, "Query a specific page of paginated results")
+	cmd.Flags().Int(flags.FlagPage, rest.DefaultPage, "Query a specific page of paginated results")
 	cmd.Flags().Int(flags.FlagLimit, 100, "Query number of results returned per page")
 
 	return cmd
@@ -98,7 +100,11 @@ func (rvo ResultValidatorsOutput) String() string {
 }
 
 func bech32ValidatorOutput(validator *tmtypes.Validator) (ValidatorOutput, error) {
-	bechValPubkey, err := sdk.Bech32ifyPubKey(sdk.Bech32PubKeyTypeConsPub, validator.PubKey)
+	pk, err := cryptocodec.FromTmPubKeyInterface(validator.PubKey)
+	if err != nil {
+		return ValidatorOutput{}, err
+	}
+	bechValPubkey, err := sdk.Bech32ifyPubKey(sdk.Bech32PubKeyTypeConsPub, pk)
 	if err != nil {
 		return ValidatorOutput{}, err
 	}
@@ -119,7 +125,7 @@ func GetValidators(clientCtx client.Context, height *int64, page, limit *int) (R
 		return ResultValidatorsOutput{}, err
 	}
 
-	validatorsRes, err := node.Validators(height, page, limit)
+	validatorsRes, err := node.Validators(context.Background(), height, page, limit)
 	if err != nil {
 		return ResultValidatorsOutput{}, err
 	}

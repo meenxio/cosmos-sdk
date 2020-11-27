@@ -14,7 +14,7 @@ import (
 )
 
 func testComponents() (*codec.LegacyAmino, sdk.Context, sdk.StoreKey, sdk.StoreKey, paramskeeper.Keeper) {
-	marshaler := simapp.MakeEncodingConfig().Marshaler
+	marshaler := simapp.MakeTestEncodingConfig().Marshaler
 	legacyAmino := createTestCodec()
 	mkey := sdk.NewKVStoreKey("test")
 	tkey := sdk.NewTransientStoreKey("transient_test")
@@ -31,8 +31,8 @@ type s struct {
 }
 
 func createTestCodec() *codec.LegacyAmino {
-	cdc := codec.New()
-	sdk.RegisterCodec(cdc)
+	cdc := codec.NewLegacyAmino()
+	sdk.RegisterLegacyAminoCodec(cdc)
 	cdc.RegisterConcrete(s{}, "test/s", nil)
 	cdc.RegisterConcrete(invalid{}, "test/invalid", nil)
 	return cdc

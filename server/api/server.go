@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/rakyll/statik/fs"
 	"github.com/tendermint/tendermint/libs/log"
 	tmrpcserver "github.com/tendermint/tendermint/rpc/jsonrpc/server"
 
@@ -57,6 +56,7 @@ func New(clientCtx client.Context, logger log.Logger) *Server {
 		EmitDefaults: true,
 		Indent:       "  ",
 		OrigName:     true,
+		AnyResolver:  clientCtx.InterfaceRegistry,
 	}
 
 	return &Server{
@@ -83,10 +83,6 @@ func New(clientCtx client.Context, logger log.Logger) *Server {
 // and are delegated to the Tendermint JSON RPC server. The process is
 // non-blocking, so an external signal handler must be used.
 func (s *Server) Start(cfg config.Config) error {
-	if cfg.API.Swagger {
-		s.registerSwaggerUI()
-	}
-
 	if cfg.Telemetry.Enabled {
 		m, err := telemetry.New(cfg.Telemetry)
 		if err != nil {
@@ -108,7 +104,8 @@ func (s *Server) Start(cfg config.Config) error {
 		return err
 	}
 
-	s.registerGRPCRoutes()
+	s.registerGRPCGatewayRoutes()
+
 	s.listener = listener
 	var h http.Handler = s.Router
 
@@ -117,6 +114,7 @@ func (s *Server) Start(cfg config.Config) error {
 		return tmrpcserver.Serve(s.listener, allowAllCORS(h), s.logger, tmCfg)
 	}
 
+	s.logger.Info("starting API server...")
 	return tmrpcserver.Serve(s.listener, s.Router, s.logger, tmCfg)
 }
 
@@ -125,17 +123,7 @@ func (s *Server) Close() error {
 	return s.listener.Close()
 }
 
-func (s *Server) registerSwaggerUI() {
-	statikFS, err := fs.New()
-	if err != nil {
-		panic(err)
-	}
-
-	staticServer := http.FileServer(statikFS)
-	s.Router.PathPrefix("/legacy").Handler(staticServer)
-}
-
-func (s *Server) registerGRPCRoutes() {
+func (s *Server) registerGRPCGatewayRoutes() {
 	s.Router.PathPrefix("/").Handler(s.GRPCRouter)
 }
 

@@ -8,25 +8,26 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/codec/types"
-
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	tmcrypto "github.com/tendermint/tendermint/crypto"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	codec2 "github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
+	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/tx"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authcli "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	authtest "github.com/cosmos/cosmos-sdk/x/auth/client/testutil"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -60,7 +61,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	account2, _, err := kb.NewMnemonic("newAccount2", keyring.English, sdk.FullFundraiserPath, hd.Secp256k1)
 	s.Require().NoError(err)
 
-	multi := multisig.NewPubKeyMultisigThreshold(2, []tmcrypto.PubKey{account1.GetPubKey(), account2.GetPubKey()})
+	multi := kmultisig.NewLegacyAminoPubKey(2, []cryptotypes.PubKey{account1.GetPubKey(), account2.GetPubKey()})
 	_, err = kb.SaveMultisig("multi", multi)
 	s.Require().NoError(err)
 
@@ -165,6 +166,100 @@ func (s *IntegrationTestSuite) TestCLISignBatch() {
 	s.Require().Error(err)
 }
 
+func (s *IntegrationTestSuite) TestCLIQueryTxCmd() {
+	val := s.network.Validators[0]
+
+	account2, err := val.ClientCtx.Keyring.Key("newAccount2")
+	s.Require().NoError(err)
+
+	sendTokens := sdk.NewInt64Coin(s.cfg.BondDenom, 10)
+
+	// Send coins, try both with legacy Msg and with Msg service.
+	// Legacy Msg.
+	legacyMsgOut, err := bankcli.MsgSendExec(
+		val.ClientCtx,
+		val.Address,
+		account2.GetAddress(),
+		sdk.NewCoins(sendTokens),
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+		fmt.Sprintf("--gas=%d", flags.DefaultGasLimit),
+	)
+	s.Require().NoError(err)
+	var legacyMsgTxRes sdk.TxResponse
+	s.Require().NoError(val.ClientCtx.JSONMarshaler.UnmarshalJSON(legacyMsgOut.Bytes(), &legacyMsgTxRes))
+
+	// Service Msg.
+	out, err := bankcli.ServiceMsgSendExec(
+		val.ClientCtx,
+		val.Address,
+		account2.GetAddress(),
+		sdk.NewCoins(sendTokens),
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+		fmt.Sprintf("--gas=%d", flags.DefaultGasLimit),
+	)
+	s.Require().NoError(err)
+	var txRes sdk.TxResponse
+	s.Require().NoError(val.ClientCtx.JSONMarshaler.UnmarshalJSON(out.Bytes(), &txRes))
+
+	s.Require().NoError(s.network.WaitForNextBlock())
+
+	testCases := []struct {
+		name           string
+		args           []string
+		expectErr      bool
+		rawLogContains string
+	}{
+		{
+			"with invalid hash",
+			[]string{"somethinginvalid", fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+			true,
+			"",
+		},
+		{
+			"with valid and not existing hash",
+			[]string{"C7E7D3A86A17AB3A321172239F3B61357937AF0F25D9FA4D2F4DCCAD9B0D7747", fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+			true,
+			"",
+		},
+		{
+			"happy case (legacy Msg)",
+			[]string{legacyMsgTxRes.TxHash, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+			false,
+			"",
+		},
+		{
+			"happy case (service Msg)",
+			[]string{txRes.TxHash, fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+			false,
+			"/cosmos.bank.v1beta1.Msg/Send",
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		s.Run(tc.name, func() {
+			cmd := authcli.QueryTxCmd()
+			clientCtx := val.ClientCtx
+
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+
+			if tc.expectErr {
+				s.Require().Error(err)
+				s.Require().NotEqual("internal", err.Error())
+			} else {
+				var result sdk.TxResponse
+				s.Require().NoError(val.ClientCtx.JSONMarshaler.UnmarshalJSON(out.Bytes(), &result))
+				s.Require().NotNil(result.Height)
+				s.Require().Contains(result.RawLog, tc.rawLogContains)
+			}
+		})
+	}
+}
+
 func (s *IntegrationTestSuite) TestCLISendGenerateSignAndBroadcast() {
 	val1 := s.network.Validators[0]
 
@@ -193,7 +288,9 @@ func (s *IntegrationTestSuite) TestCLISendGenerateSignAndBroadcast() {
 	s.Require().NoError(err)
 	s.Require().Equal(txBuilder.GetTx().GetGas(), uint64(flags.DefaultGasLimit))
 	s.Require().Equal(len(txBuilder.GetTx().GetMsgs()), 1)
-	s.Require().Equal(0, len(txBuilder.GetTx().GetSignatures()))
+	sigs, err := txBuilder.GetTx().GetSignaturesV2()
+	s.Require().NoError(err)
+	s.Require().Equal(0, len(sigs))
 
 	// Test generate sendTx with --gas=$amount
 	limitedGasGeneratedTx, err := bankcli.MsgSendExec(
@@ -215,7 +312,9 @@ func (s *IntegrationTestSuite) TestCLISendGenerateSignAndBroadcast() {
 	s.Require().NoError(err)
 	s.Require().Equal(txBuilder.GetTx().GetGas(), uint64(100))
 	s.Require().Equal(len(txBuilder.GetTx().GetMsgs()), 1)
-	s.Require().Equal(0, len(txBuilder.GetTx().GetSignatures()))
+	sigs, err = txBuilder.GetTx().GetSignaturesV2()
+	s.Require().NoError(err)
+	s.Require().Equal(0, len(sigs))
 
 	resp, err := bankcli.QueryBalancesExec(val1.ClientCtx, val1.Address)
 	s.Require().NoError(err)
@@ -274,7 +373,9 @@ func (s *IntegrationTestSuite) TestCLISendGenerateSignAndBroadcast() {
 	txBuilder, err = val1.ClientCtx.TxConfig.WrapTxBuilder(signedFinalTx)
 	s.Require().NoError(err)
 	s.Require().Equal(len(txBuilder.GetTx().GetMsgs()), 1)
-	s.Require().Equal(1, len(txBuilder.GetTx().GetSignatures()))
+	sigs, err = txBuilder.GetTx().GetSignaturesV2()
+	s.Require().NoError(err)
+	s.Require().Equal(1, len(sigs))
 	s.Require().Equal(val1.Address.String(), txBuilder.GetTx().GetSigners()[0].String())
 
 	// Write the output to disk
@@ -328,9 +429,9 @@ func (s *IntegrationTestSuite) TestCLISendGenerateSignAndBroadcast() {
 func (s *IntegrationTestSuite) TestCLIMultisignInsufficientCosigners() {
 	val1 := s.network.Validators[0]
 
-	codec := codec2.New()
-	sdk.RegisterCodec(codec)
-	banktypes.RegisterCodec(codec)
+	codec := codec2.NewLegacyAmino()
+	sdk.RegisterLegacyAminoCodec(codec)
+	banktypes.RegisterLegacyAminoCodec(codec)
 	val1.ClientCtx.LegacyAmino = codec
 
 	// Generate 2 accounts and a multisig.
@@ -439,9 +540,9 @@ func (s *IntegrationTestSuite) TestCLIEncode() {
 func (s *IntegrationTestSuite) TestCLIMultisignSortSignatures() {
 	val1 := s.network.Validators[0]
 
-	codec := codec2.New()
-	sdk.RegisterCodec(codec)
-	banktypes.RegisterCodec(codec)
+	codec := codec2.NewLegacyAmino()
+	sdk.RegisterLegacyAminoCodec(codec)
+	banktypes.RegisterLegacyAminoCodec(codec)
 	val1.ClientCtx.LegacyAmino = codec
 
 	// Generate 2 accounts and a multisig.
@@ -540,9 +641,9 @@ func (s *IntegrationTestSuite) TestCLIMultisignSortSignatures() {
 func (s *IntegrationTestSuite) TestCLIMultisign() {
 	val1 := s.network.Validators[0]
 
-	codec := codec2.New()
-	sdk.RegisterCodec(codec)
-	banktypes.RegisterCodec(codec)
+	codec := codec2.NewLegacyAmino()
+	sdk.RegisterLegacyAminoCodec(codec)
+	banktypes.RegisterLegacyAminoCodec(codec)
 	val1.ClientCtx.LegacyAmino = codec
 
 	// Generate 2 accounts and a multisig.
@@ -680,7 +781,7 @@ func (s *IntegrationTestSuite) TestGetAccountCmd() {
 
 func TestGetBroadcastCommand_OfflineFlag(t *testing.T) {
 	clientCtx := client.Context{}.WithOffline(true)
-	clientCtx = clientCtx.WithTxConfig(simapp.MakeEncodingConfig().TxConfig)
+	clientCtx = clientCtx.WithTxConfig(simapp.MakeTestEncodingConfig().TxConfig)
 
 	cmd := authcli.GetBroadcastCommand()
 	_ = testutil.ApplyMockIODiscardOutErr(cmd)
@@ -691,7 +792,7 @@ func TestGetBroadcastCommand_OfflineFlag(t *testing.T) {
 
 func TestGetBroadcastCommand_WithoutOfflineFlag(t *testing.T) {
 	clientCtx := client.Context{}
-	txCfg := simapp.MakeEncodingConfig().TxConfig
+	txCfg := simapp.MakeTestEncodingConfig().TxConfig
 	clientCtx = clientCtx.WithTxConfig(txCfg)
 
 	ctx := context.Background()
@@ -699,9 +800,7 @@ func TestGetBroadcastCommand_WithoutOfflineFlag(t *testing.T) {
 
 	cmd := authcli.GetBroadcastCommand()
 	_, out := testutil.ApplyMockIO(cmd)
-
-	testDir, cleanFunc := testutil.NewTestCaseDir(t)
-	t.Cleanup(cleanFunc)
+	testDir := t.TempDir()
 
 	// Create new file with tx
 	builder := txCfg.NewTxBuilder()
@@ -720,6 +819,105 @@ func TestGetBroadcastCommand_WithoutOfflineFlag(t *testing.T) {
 	cmd.SetArgs([]string{txFileName})
 	require.Error(t, cmd.ExecuteContext(ctx))
 	require.Contains(t, out.String(), "unsupported return type ; supported types: sync, async, block")
+}
+
+func (s *IntegrationTestSuite) TestQueryParamsCmd() {
+	val := s.network.Validators[0]
+
+	testCases := []struct {
+		name      string
+		args      []string
+		expectErr bool
+	}{
+		{
+			"happy case",
+			[]string{fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+			false,
+		},
+		{
+			"with specific height",
+			[]string{fmt.Sprintf("--%s=1", flags.FlagHeight), fmt.Sprintf("--%s=json", tmcli.OutputFlag)},
+			false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		s.Run(tc.name, func() {
+			cmd := authcli.QueryParamsCmd()
+			clientCtx := val.ClientCtx
+
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, tc.args)
+			if tc.expectErr {
+				s.Require().Error(err)
+				s.Require().NotEqual("internal", err.Error())
+			} else {
+				var authParams authtypes.Params
+				s.Require().NoError(val.ClientCtx.JSONMarshaler.UnmarshalJSON(out.Bytes(), &authParams))
+				s.Require().NotNil(authParams.MaxMemoCharacters)
+			}
+		})
+	}
+}
+
+// TestTxWithoutPublicKey makes sure sending a proto tx message without the
+// public key doesn't cause any error in the RPC layer (broadcast).
+// See https://github.com/cosmos/cosmos-sdk/issues/7585 for more details.
+func (s *IntegrationTestSuite) TestTxWithoutPublicKey() {
+	val1 := s.network.Validators[0]
+	txCfg := val1.ClientCtx.TxConfig
+
+	// Create a txBuilder with an unsigned tx.
+	txBuilder := txCfg.NewTxBuilder()
+	msg := banktypes.NewMsgSend(val1.Address, val1.Address, sdk.NewCoins(
+		sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10)),
+	))
+	err := txBuilder.SetMsgs(msg)
+	s.Require().NoError(err)
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(150))))
+	txBuilder.SetGasLimit(testdata.NewTestGasLimit())
+	// Set empty signature to set signer infos.
+	sigV2 := signing.SignatureV2{
+		PubKey: val1.PubKey,
+		Data: &signing.SingleSignatureData{
+			SignMode:  txCfg.SignModeHandler().DefaultMode(),
+			Signature: nil,
+		},
+	}
+	err = txBuilder.SetSignatures(sigV2)
+	s.Require().NoError(err)
+
+	// Create a file with the unsigned tx.
+	txJSON, err := txCfg.TxJSONEncoder()(txBuilder.GetTx())
+	s.Require().NoError(err)
+	unsignedTxFile, cleanup := testutil.WriteToNewTempFile(s.T(), string(txJSON))
+	defer cleanup()
+
+	// Sign the file with the unsignedTx.
+	signedTx, err := authtest.TxSignExec(val1.ClientCtx, val1.Address, unsignedTxFile.Name())
+	s.Require().NoError(err)
+
+	// Remove the signerInfo's `public_key` field manually from the signedTx.
+	// Note: this method is only used for test purposes! In general, one should
+	// use txBuilder and TxEncoder/TxDecoder to manipulate txs.
+	var tx tx.Tx
+	err = val1.ClientCtx.JSONMarshaler.UnmarshalJSON(signedTx.Bytes(), &tx)
+	s.Require().NoError(err)
+	tx.AuthInfo.SignerInfos[0].PublicKey = nil
+	// Re-encode the tx again, to another file.
+	txJSON, err = val1.ClientCtx.JSONMarshaler.MarshalJSON(&tx)
+	s.Require().NoError(err)
+	signedTxFile, cleanup2 := testutil.WriteToNewTempFile(s.T(), string(txJSON))
+	s.Require().True(strings.Contains(string(txJSON), "\"public_key\":null"))
+	defer cleanup2()
+
+	// Broadcast tx, test that it shouldn't panic.
+	val1.ClientCtx.BroadcastMode = flags.BroadcastSync
+	out, err := authtest.TxBroadcastExec(val1.ClientCtx, signedTxFile.Name())
+	var res sdk.TxResponse
+	s.Require().NoError(val1.ClientCtx.JSONMarshaler.UnmarshalJSON(out.Bytes(), &res))
+	s.Require().NotEqual(0, res.Code)
+	s.Require().NoError(err)
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

@@ -1,3 +1,5 @@
+// +build norace
+
 package rest_test
 
 import (
@@ -8,6 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
@@ -86,6 +90,66 @@ func (s *IntegrationTestSuite) TestTotalSupplyGRPCHandler() {
 		tc := tc
 		s.Run(tc.name, func() {
 			resp, err := testutil.GetRequestWithHeaders(tc.url, tc.headers)
+			s.Require().NoError(err)
+
+			s.Require().NoError(val.ClientCtx.JSONMarshaler.UnmarshalJSON(resp, tc.respType))
+			s.Require().Equal(tc.expected.String(), tc.respType.String())
+		})
+	}
+}
+
+func (s *IntegrationTestSuite) TestBalancesGRPCHandler() {
+	val := s.network.Validators[0]
+	baseURL := val.APIAddress
+
+	testCases := []struct {
+		name     string
+		url      string
+		respType proto.Message
+		expected proto.Message
+	}{
+		{
+			"gRPC total account balance",
+			fmt.Sprintf("%s/cosmos/bank/v1beta1/balances/%s", baseURL, val.Address.String()),
+			&types.QueryAllBalancesResponse{},
+			&types.QueryAllBalancesResponse{
+				Balances: sdk.NewCoins(
+					sdk.NewCoin(fmt.Sprintf("%stoken", val.Moniker), s.cfg.AccountTokens),
+					sdk.NewCoin(s.cfg.BondDenom, s.cfg.StakingTokens.Sub(s.cfg.BondedTokens)),
+				),
+				Pagination: &query.PageResponse{
+					Total: 2,
+				},
+			},
+		},
+		{
+			"gPRC account balance of a denom",
+			fmt.Sprintf("%s/cosmos/bank/v1beta1/balances/%s/%s", baseURL, val.Address.String(), s.cfg.BondDenom),
+			&types.QueryBalanceResponse{},
+			&types.QueryBalanceResponse{
+				Balance: &sdk.Coin{
+					Denom:  s.cfg.BondDenom,
+					Amount: s.cfg.StakingTokens.Sub(s.cfg.BondedTokens),
+				},
+			},
+		},
+		{
+			"gPRC account balance of a bogus denom",
+			fmt.Sprintf("%s/cosmos/bank/v1beta1/balances/%s/foobar", baseURL, val.Address.String()),
+			&types.QueryBalanceResponse{},
+			&types.QueryBalanceResponse{
+				Balance: &sdk.Coin{
+					Denom:  "foobar",
+					Amount: sdk.NewInt(0),
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		s.Run(tc.name, func() {
+			resp, err := rest.GetRequest(tc.url)
 			s.Require().NoError(err)
 
 			s.Require().NoError(val.ClientCtx.JSONMarshaler.UnmarshalJSON(resp, tc.respType))

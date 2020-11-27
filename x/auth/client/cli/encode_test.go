@@ -15,13 +15,13 @@ import (
 )
 
 func TestGetCommandEncode(t *testing.T) {
-	encodingConfig := simappparams.MakeEncodingConfig()
+	encodingConfig := simappparams.MakeTestEncodingConfig()
 
 	cmd := GetEncodeCommand()
 	_ = testutil.ApplyMockIODiscardOutErr(cmd)
 
-	authtypes.RegisterCodec(encodingConfig.Amino)
-	sdk.RegisterCodec(encodingConfig.Amino)
+	authtypes.RegisterLegacyAminoCodec(encodingConfig.Amino)
+	sdk.RegisterLegacyAminoCodec(encodingConfig.Amino)
 
 	txCfg := encodingConfig.TxConfig
 
@@ -49,7 +49,7 @@ func TestGetCommandEncode(t *testing.T) {
 }
 
 func TestGetCommandDecode(t *testing.T) {
-	encodingConfig := simappparams.MakeEncodingConfig()
+	encodingConfig := simappparams.MakeTestEncodingConfig()
 
 	clientCtx := client.Context{}.
 		WithTxConfig(encodingConfig.TxConfig).
@@ -58,7 +58,7 @@ func TestGetCommandDecode(t *testing.T) {
 	cmd := GetDecodeCommand()
 	_ = testutil.ApplyMockIODiscardOutErr(cmd)
 
-	sdk.RegisterCodec(encodingConfig.Amino)
+	sdk.RegisterLegacyAminoCodec(encodingConfig.Amino)
 
 	txCfg := encodingConfig.TxConfig
 	clientCtx = clientCtx.WithTxConfig(txCfg)

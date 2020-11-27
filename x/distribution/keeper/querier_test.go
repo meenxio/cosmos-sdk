@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/cosmos/cosmos-sdk/x/staking/teststaking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -111,9 +112,9 @@ func getQueriedCommunityPool(t *testing.T, ctx sdk.Context, cdc *codec.LegacyAmi
 }
 
 func TestQueries(t *testing.T) {
-	cdc := codec.New()
-	types.RegisterCodec(cdc)
-	banktypes.RegisterCodec(cdc)
+	cdc := codec.NewLegacyAmino()
+	types.RegisterLegacyAminoCodec(cdc)
+	banktypes.RegisterLegacyAminoCodec(cdc)
 
 	app := simapp.Setup(false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
@@ -169,15 +170,9 @@ func TestQueries(t *testing.T) {
 	require.Equal(t, []types.ValidatorSlashEvent{slashOne, slashTwo}, slashes)
 
 	// test delegation rewards query
-	sh := staking.NewHandler(app.StakingKeeper)
-	comm := stakingtypes.NewCommissionRates(sdk.NewDecWithPrec(5, 1), sdk.NewDecWithPrec(5, 1), sdk.NewDec(0))
-	msg := stakingtypes.NewMsgCreateValidator(
-		valOpAddr1, valConsPk1, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Description{}, comm, sdk.OneInt(),
-	)
-
-	res, err := sh(ctx, msg)
-	require.NoError(t, err)
-	require.NotNil(t, res)
+	tstaking := teststaking.NewHelper(t, ctx, app.StakingKeeper)
+	tstaking.Commission = stakingtypes.NewCommissionRates(sdk.NewDecWithPrec(5, 1), sdk.NewDecWithPrec(5, 1), sdk.NewDec(0))
+	tstaking.CreateValidator(valOpAddr1, valConsPk1, sdk.NewInt(100), true)
 
 	staking.EndBlocker(ctx, app.StakingKeeper)
 
