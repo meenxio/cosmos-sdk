@@ -2,6 +2,7 @@ package rest_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -11,6 +12,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
@@ -21,12 +24,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 	authcli "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	rest2 "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
+	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
+	authtest "github.com/cosmos/cosmos-sdk/x/auth/client/testutil"
 	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibccli "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/client/cli"
-	ibcsolomachinecli "github.com/cosmos/cosmos-sdk/x/ibc/light-clients/06-solomachine/client/cli"
 )
 
 type IntegrationTestSuite struct {
@@ -49,7 +51,17 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.network = network.New(s.T(), cfg)
 
 	kb := s.network.Validators[0].ClientCtx.Keyring
-	_, _, err := kb.NewMnemonic("newAccount", keyring.English, sdk.FullFundraiserPath, hd.Secp256k1)
+	_, _, err := kb.NewMnemonic("newAccount", keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
+	s.Require().NoError(err)
+
+	account1, _, err := kb.NewMnemonic("newAccount1", keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
+	s.Require().NoError(err)
+
+	account2, _, err := kb.NewMnemonic("newAccount2", keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
+	s.Require().NoError(err)
+
+	multi := kmultisig.NewLegacyAminoPubKey(2, []cryptotypes.PubKey{account1.GetPubKey(), account2.GetPubKey()})
+	_, err = kb.SaveMultisig("multi", multi)
 	s.Require().NoError(err)
 
 	_, err = s.network.WaitForHeight(1)
@@ -72,7 +84,7 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.network.Cleanup()
 }
 
-func mkTx() legacytx.StdTx {
+func mkStdTx() legacytx.StdTx {
 	// NOTE: this uses StdTx explicitly, don't migrate it!
 	return legacytx.StdTx{
 		Msgs: []sdk.Msg{&types.MsgSend{}},
@@ -87,7 +99,7 @@ func mkTx() legacytx.StdTx {
 func (s *IntegrationTestSuite) TestEncodeDecode() {
 	var require = s.Require()
 	val := s.network.Validators[0]
-	stdTx := mkTx()
+	stdTx := mkStdTx()
 
 	// NOTE: this uses amino explicitly, don't migrate it!
 	cdc := val.ClientCtx.LegacyAmino
@@ -98,11 +110,11 @@ func (s *IntegrationTestSuite) TestEncodeDecode() {
 	res, err := rest.PostRequest(fmt.Sprintf("%s/txs/encode", val.APIAddress), "application/json", bz)
 	require.NoError(err)
 
-	var encodeResp rest2.EncodeResp
+	var encodeResp authrest.EncodeResp
 	err = cdc.UnmarshalJSON(res, &encodeResp)
 	require.NoError(err)
 
-	bz, err = cdc.MarshalJSON(rest2.DecodeReq{Tx: encodeResp.Tx})
+	bz, err = cdc.MarshalJSON(authrest.DecodeReq{Tx: encodeResp.Tx})
 	require.NoError(err)
 
 	res, err = rest.PostRequest(fmt.Sprintf("%s/txs/decode", val.APIAddress), "application/json", bz)
@@ -111,14 +123,26 @@ func (s *IntegrationTestSuite) TestEncodeDecode() {
 	var respWithHeight rest.ResponseWithHeight
 	err = cdc.UnmarshalJSON(res, &respWithHeight)
 	require.NoError(err)
-	var decodeResp rest2.DecodeResp
+	var decodeResp authrest.DecodeResp
 	err = cdc.UnmarshalJSON(respWithHeight.Result, &decodeResp)
 	require.NoError(err)
 	require.Equal(stdTx, legacytx.StdTx(decodeResp))
 }
 
+func (s *IntegrationTestSuite) TestQueryAccountWithColon() {
+	val := s.network.Validators[0]
+	// This address is not a valid simapp address! It is only used to test that addresses with
+	// colon don't 501. See
+	// https://github.com/cosmos/cosmos-sdk/issues/8650
+	addrWithColon := "cosmos:1m4f6lwd9eh8e5nxt0h00d46d3fr03apfh8qf4g"
+
+	res, err := rest.GetRequest(fmt.Sprintf("%s/cosmos/auth/v1beta1/accounts/%s", val.APIAddress, addrWithColon))
+	s.Require().NoError(err)
+	s.Require().Contains(string(res), "decoding bech32 failed")
+}
+
 func (s *IntegrationTestSuite) TestBroadcastTxRequest() {
-	stdTx := mkTx()
+	stdTx := mkStdTx()
 
 	// we just test with async mode because this tx will fail - all we care about is that it got encoded and broadcast correctly
 	res, err := s.broadcastReq(stdTx, "async")
@@ -210,7 +234,7 @@ func (s *IntegrationTestSuite) TestQueryTxWithStdTx() {
 	s.testQueryTx(s.stdTxRes.Height, s.stdTxRes.TxHash, val0.Address.String())
 }
 
-func (s *IntegrationTestSuite) TestQueryTxWithServiceMessage() {
+func (s *IntegrationTestSuite) TestQueryTxWithServiceMsg() {
 	val := s.network.Validators[0]
 
 	sendTokens := sdk.NewInt64Coin(s.cfg.BondDenom, 10)
@@ -219,7 +243,7 @@ func (s *IntegrationTestSuite) TestQueryTxWithServiceMessage() {
 	// Might need to wait a block to refresh sequences from previous setups.
 	s.Require().NoError(s.network.WaitForNextBlock())
 
-	out, err := bankcli.ServiceMsgSendExec(
+	out, err := bankcli.MsgSendExec(
 		val.ClientCtx,
 		val.Address,
 		addr,
@@ -319,7 +343,7 @@ func (s *IntegrationTestSuite) createTestStdTx(val *network.Validator, accNum, s
 		WithSequence(sequence)
 
 	// sign Tx (offline mode so we can manually set sequence number)
-	err := authclient.SignTx(txFactory, val.ClientCtx, val.Moniker, txBuilder, true)
+	err := authclient.SignTx(txFactory, val.ClientCtx, val.Moniker, txBuilder, true, true)
 	s.Require().NoError(err)
 
 	stdTx := txBuilder.GetTx().(legacytx.StdTx)
@@ -332,7 +356,7 @@ func (s *IntegrationTestSuite) broadcastReq(stdTx legacytx.StdTx, mode string) (
 
 	// NOTE: this uses amino explicitly, don't migrate it!
 	cdc := val.ClientCtx.LegacyAmino
-	req := rest2.BroadcastReq{
+	req := authrest.BroadcastReq{
 		Tx:   stdTx,
 		Mode: mode,
 	}
@@ -345,7 +369,7 @@ func (s *IntegrationTestSuite) broadcastReq(stdTx legacytx.StdTx, mode string) (
 // testQueryIBCTx is a helper function to test querying txs which:
 // - show an error message on legacy REST endpoints
 // - succeed using gRPC
-// In practise, we call this function on IBC txs.
+// In practice, we call this function on IBC txs.
 func (s *IntegrationTestSuite) testQueryIBCTx(txRes sdk.TxResponse, cmd *cobra.Command, args []string) {
 	val := s.network.Validators[0]
 
@@ -381,7 +405,7 @@ func (s *IntegrationTestSuite) testQueryIBCTx(txRes sdk.TxResponse, cmd *cobra.C
 	}
 
 	// try fetching the txn using gRPC req, it will fetch info since it has proto codec.
-	grpcJSON, err := rest.GetRequest(fmt.Sprintf("%s/cosmos/tx/v1beta1/tx/%s", val.APIAddress, txRes.TxHash))
+	grpcJSON, err := rest.GetRequest(fmt.Sprintf("%s/cosmos/tx/v1beta1/txs/%s", val.APIAddress, txRes.TxHash))
 	s.Require().NoError(err)
 
 	var getTxRes txtypes.GetTxResponse
@@ -393,15 +417,14 @@ func (s *IntegrationTestSuite) testQueryIBCTx(txRes sdk.TxResponse, cmd *cobra.C
 	out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, cmd, args)
 	s.Require().NoError(err)
 
-	txFile, cleanup := testutil.WriteToNewTempFile(s.T(), string(out.Bytes()))
+	txFile := testutil.WriteToNewTempFile(s.T(), string(out.Bytes()))
 	txFileName := txFile.Name()
-	s.T().Cleanup(cleanup)
 
 	// encode the generated txn.
 	out, err = clitestutil.ExecTestCLICmd(val.ClientCtx, authcli.GetEncodeCommand(), []string{txFileName})
 	s.Require().NoError(err)
 
-	bz, err := val.ClientCtx.LegacyAmino.MarshalJSON(rest2.DecodeReq{Tx: string(out.Bytes())})
+	bz, err := val.ClientCtx.LegacyAmino.MarshalJSON(authrest.DecodeReq{Tx: string(out.Bytes())})
 	s.Require().NoError(err)
 
 	// try to decode the txn using legacy rest, it fails.
@@ -413,73 +436,95 @@ func (s *IntegrationTestSuite) testQueryIBCTx(txRes sdk.TxResponse, cmd *cobra.C
 	s.Require().Contains(errResp.Error, errMsg)
 }
 
-// TestLegacyRestErrMessages creates two IBC txs, one that fails, one that
-// succeeds, and make sure we cannot query any of them (with pretty error msg).
-// Our intension is to test the error message of querying a message which is
-// signed with proto, since IBC won't support legacy amino at all we are
-// considering a message from IBC module.
-func (s *IntegrationTestSuite) TestLegacyRestErrMessages() {
-	val := s.network.Validators[0]
+// TestLegacyMultiSig creates a legacy multisig transaction, and makes sure
+// we can query it via the legacy REST endpoint.
+// ref: https://github.com/cosmos/cosmos-sdk/issues/8679
+func (s *IntegrationTestSuite) TestLegacyMultisig() {
+	val1 := *s.network.Validators[0]
 
-	// Write consensus json to temp file, used for an IBC message.
-	consensusJSON, cleanup := testutil.WriteToNewTempFile(
-		s.T(),
-		`{"public_key":{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"A/3SXL2ONYaOkxpdR5P8tHTlSlPv1AwQwSFxKRee5JQW"},"diversifier":"diversifier","timestamp":"10"}`,
+	// Generate 2 accounts and a multisig.
+	account1, err := val1.ClientCtx.Keyring.Key("newAccount1")
+	s.Require().NoError(err)
+
+	account2, err := val1.ClientCtx.Keyring.Key("newAccount2")
+	s.Require().NoError(err)
+
+	multisigInfo, err := val1.ClientCtx.Keyring.Key("multi")
+	s.Require().NoError(err)
+
+	// Send coins from validator to multisig.
+	sendTokens := sdk.NewInt64Coin(s.cfg.BondDenom, 1000)
+	_, err = bankcli.MsgSendExec(
+		val1.ClientCtx,
+		val1.Address,
+		multisigInfo.GetAddress(),
+		sdk.NewCoins(sendTokens),
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+		fmt.Sprintf("--gas=%d", flags.DefaultGasLimit),
 	)
-	defer cleanup()
 
-	testCases := []struct {
-		desc string
-		cmd  *cobra.Command
-		args []string
-		code uint32
-	}{
-		{
-			"Failing IBC message",
-			ibccli.NewChannelCloseInitCmd(),
-			[]string{
-				"121",       // dummy port-id
-				"channel-0", // dummy channel-id
-				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
-				fmt.Sprintf("--gas=%d", flags.DefaultGasLimit),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
-				fmt.Sprintf("--%s=foobar", flags.FlagMemo),
-			},
-			uint32(7),
-		},
-		{
-			"Successful IBC message",
-			ibcsolomachinecli.NewCreateClientCmd(),
-			[]string{
-				"21212121212",        // dummy client-id
-				"1",                  // dummy sequence
-				consensusJSON.Name(), // path to consensus json,
-				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
-				fmt.Sprintf("--gas=%d", flags.DefaultGasLimit),
-				fmt.Sprintf("--%s=%s", flags.FlagFrom, val.Address.String()),
-				fmt.Sprintf("--%s=foobar", flags.FlagMemo),
-			},
-			uint32(0),
-		},
-	}
+	s.Require().NoError(s.network.WaitForNextBlock())
 
-	for _, tc := range testCases {
-		s.Run(fmt.Sprintf("Case %s", tc.desc), func() {
-			out, err := clitestutil.ExecTestCLICmd(val.ClientCtx, tc.cmd, tc.args)
-			s.Require().NoError(err)
-			var txRes sdk.TxResponse
-			s.Require().NoError(val.ClientCtx.JSONMarshaler.UnmarshalJSON(out.Bytes(), &txRes))
-			s.Require().Equal(tc.code, txRes.Code)
+	// Generate multisig transaction to a random address.
+	_, _, recipient := testdata.KeyTestPubAddr()
+	multiGeneratedTx, err := bankcli.MsgSendExec(
+		val1.ClientCtx,
+		multisigInfo.GetAddress(),
+		recipient,
+		sdk.NewCoins(
+			sdk.NewInt64Coin(s.cfg.BondDenom, 5),
+		),
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastBlock),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(s.cfg.BondDenom, sdk.NewInt(10))).String()),
+		fmt.Sprintf("--%s=true", flags.FlagGenerateOnly),
+	)
+	s.Require().NoError(err)
 
-			s.Require().NoError(s.network.WaitForNextBlock())
+	// Save tx to file
+	multiGeneratedTxFile := testutil.WriteToNewTempFile(s.T(), multiGeneratedTx.String())
 
-			s.testQueryIBCTx(txRes, tc.cmd, tc.args)
-		})
-	}
+	// Sign with account1
+	val1.ClientCtx.HomeDir = strings.Replace(val1.ClientCtx.HomeDir, "simd", "simcli", 1)
+	account1Signature, err := authtest.TxSignExec(val1.ClientCtx, account1.GetAddress(), multiGeneratedTxFile.Name(), "--multisig", multisigInfo.GetAddress().String())
+	s.Require().NoError(err)
+
+	sign1File := testutil.WriteToNewTempFile(s.T(), account1Signature.String())
+
+	// Sign with account1
+	account2Signature, err := authtest.TxSignExec(val1.ClientCtx, account2.GetAddress(), multiGeneratedTxFile.Name(), "--multisig", multisigInfo.GetAddress().String())
+	s.Require().NoError(err)
+
+	sign2File := testutil.WriteToNewTempFile(s.T(), account2Signature.String())
+
+	// Does not work in offline mode.
+	_, err = authtest.TxMultiSignExec(val1.ClientCtx, multisigInfo.GetName(), multiGeneratedTxFile.Name(), "--offline", sign1File.Name(), sign2File.Name())
+	s.Require().EqualError(err, fmt.Sprintf("couldn't verify signature for address %s", account1.GetAddress()))
+
+	val1.ClientCtx.Offline = false
+	multiSigWith2Signatures, err := authtest.TxMultiSignExec(val1.ClientCtx, multisigInfo.GetName(), multiGeneratedTxFile.Name(), sign1File.Name(), sign2File.Name())
+	s.Require().NoError(err)
+
+	// Write the output to disk
+	signedTxFile := testutil.WriteToNewTempFile(s.T(), multiSigWith2Signatures.String())
+
+	_, err = authtest.TxValidateSignaturesExec(val1.ClientCtx, signedTxFile.Name())
+	s.Require().NoError(err)
+
+	val1.ClientCtx.BroadcastMode = flags.BroadcastBlock
+	out, err := authtest.TxBroadcastExec(val1.ClientCtx, signedTxFile.Name())
+	s.Require().NoError(err)
+
+	s.Require().NoError(s.network.WaitForNextBlock())
+
+	var txRes sdk.TxResponse
+	err = val1.ClientCtx.JSONMarshaler.UnmarshalJSON(out.Bytes(), &txRes)
+	s.Require().NoError(err)
+	s.Require().Equal(uint32(0), txRes.Code)
+
+	s.testQueryTx(txRes.Height, txRes.TxHash, recipient.String())
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

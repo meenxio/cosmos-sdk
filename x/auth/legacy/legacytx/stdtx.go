@@ -16,10 +16,12 @@ import (
 
 // Interface implementation checks
 var (
-	_ sdk.Tx             = (*StdTx)(nil)
-	_ codectypes.IntoAny = (*StdTx)(nil)
-	_ sdk.TxWithMemo     = (*StdTx)(nil)
-	_ sdk.FeeTx          = (*StdTx)(nil)
+	_ sdk.Tx                             = (*StdTx)(nil)
+	_ sdk.TxWithMemo                     = (*StdTx)(nil)
+	_ sdk.FeeTx                          = (*StdTx)(nil)
+	_ codectypes.UnpackInterfacesMessage = (*StdTx)(nil)
+
+	_ codectypes.UnpackInterfacesMessage = (*StdSignature)(nil)
 )
 
 // StdFee includes the amount of coins paid in fees and the maximum
@@ -117,6 +119,10 @@ func (ss StdSignature) MarshalYAML() (interface{}, error) {
 	return string(bz), err
 }
 
+func (ss StdSignature) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	return codectypes.UnpackInterfaces(ss.PubKey, unpacker)
+}
+
 // StdTx is the legacy transaction format for wrapping a Msg with Fee and Signatures.
 // It only works with Amino, please prefer the new protobuf Tx in types/tx.
 // NOTE: the first signature is the fee payer (Signatures must not be nil).
@@ -172,7 +178,9 @@ func (tx StdTx) ValidateBasic() error {
 	return nil
 }
 
-// AsAny implements IntoAny.AsAny.
+// Deprecated: AsAny implements intoAny. It doesn't work for protobuf serialization,
+// so it can't be saved into protobuf configured storage. We are using it only for API
+// compatibility.
 func (tx *StdTx) AsAny() *codectypes.Any {
 	return codectypes.UnsafePackAny(tx)
 }
@@ -238,14 +246,14 @@ func (tx StdTx) GetSignaturesV2() ([]signing.SignatureV2, error) {
 
 // GetPubkeys returns the pubkeys of signers if the pubkey is included in the signature
 // If pubkey is not included in the signature, then nil is in the slice instead
-func (tx StdTx) GetPubKeys() []cryptotypes.PubKey {
+func (tx StdTx) GetPubKeys() ([]cryptotypes.PubKey, error) {
 	pks := make([]cryptotypes.PubKey, len(tx.Signatures))
 
 	for i, stdSig := range tx.Signatures {
 		pks[i] = stdSig.GetPubKey()
 	}
 
-	return pks
+	return pks, nil
 }
 
 // GetGas returns the Gas in StdFee
@@ -276,5 +284,14 @@ func (tx StdTx) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
 			return err
 		}
 	}
+
+	// Signatures contain PubKeys, which need to be unpacked.
+	for _, s := range tx.Signatures {
+		err := s.UnpackInterfaces(unpacker)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

@@ -18,8 +18,8 @@ import (
 	tmcrypto "github.com/tendermint/tendermint/crypto"
 
 	"github.com/cosmos/cosmos-sdk/client/input"
+	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	"github.com/cosmos/cosmos-sdk/crypto"
-	cryptoamino "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/ledger"
 	"github.com/cosmos/cosmos-sdk/crypto/types"
@@ -64,14 +64,17 @@ type Keyring interface {
 	Delete(uid string) error
 	DeleteByAddress(address sdk.Address) error
 
-	// NewMnemonic generates a new mnemonic, derives a hierarchical deterministic
-	// key from that, and persists it to the storage. Returns the generated mnemonic and the key
-	// Info. It returns an error if it fails to generate a key for the given algo type, or if
-	// another key is already stored under the same name.
-	NewMnemonic(uid string, language Language, hdPath string, algo SignatureAlgo) (Info, string, error)
+	// NewMnemonic generates a new mnemonic, derives a hierarchical deterministic key from it, and
+	// persists the key to storage. Returns the generated mnemonic and the key Info.
+	// It returns an error if it fails to generate a key for the given algo type, or if
+	// another key is already stored under the same name or address.
+	//
+	// A passphrase set to the empty string will set the passphrase to the DefaultBIP39Passphrase value.
+	NewMnemonic(uid string, language Language, hdPath, bip39Passphrase string, algo SignatureAlgo) (Info, string, error)
 
 	// NewAccount converts a mnemonic to a private key and BIP-39 HD Path and persists it.
-	NewAccount(uid, mnemonic, bip39Passwd, hdPath string, algo SignatureAlgo) (Info, error)
+	// It fails if there is an existing key Info with the same address.
+	NewAccount(uid, mnemonic, bip39Passphrase, hdPath string, algo SignatureAlgo) (Info, error)
 
 	// SaveLedgerKey retrieves a public key reference from a Ledger device and persists it.
 	SaveLedgerKey(uid string, algo SignatureAlgo, hrp string, coinType, account, index uint32) (Info, error)
@@ -88,6 +91,13 @@ type Keyring interface {
 	Exporter
 }
 
+// UnsafeKeyring exposes unsafe operations such as unsafe unarmored export in
+// addition to those that are made available by the Keyring interface.
+type UnsafeKeyring interface {
+	Keyring
+	UnsafeExporter
+}
+
 // Signer is implemented by key stores that want to provide signing capabilities.
 type Signer interface {
 	// Sign sign byte messages with a user key.
@@ -101,8 +111,16 @@ type Signer interface {
 type Importer interface {
 	// ImportPrivKey imports ASCII armored passphrase-encrypted private keys.
 	ImportPrivKey(uid, armor, passphrase string) error
+
 	// ImportPubKey imports ASCII armored public keys.
 	ImportPubKey(uid string, armor string) error
+}
+
+// LegacyInfoImporter is implemented by key stores that support import of Info types.
+type LegacyInfoImporter interface {
+	// ImportInfo import a keyring.Info into the current keyring.
+	// It is used to migrate multisig, ledger, and public key Info structure.
+	ImportInfo(oldInfo Info) error
 }
 
 // Exporter is implemented by key stores that support export of public and private keys.
@@ -110,10 +128,18 @@ type Exporter interface {
 	// Export public key
 	ExportPubKeyArmor(uid string) (string, error)
 	ExportPubKeyArmorByAddress(address sdk.Address) (string, error)
-	// ExportPrivKey returns a private key in ASCII armored format.
+
+	// ExportPrivKeyArmor returns a private key in ASCII armored format.
 	// It returns an error if the key does not exist or a wrong encryption passphrase is supplied.
 	ExportPrivKeyArmor(uid, encryptPassphrase string) (armor string, err error)
 	ExportPrivKeyArmorByAddress(address sdk.Address, encryptPassphrase string) (armor string, err error)
+}
+
+// UnsafeExporter is implemented by key stores that support unsafe export
+// of private keys' material.
+type UnsafeExporter interface {
+	// UnsafeExportPrivKeyHex returns a private key in unarmored hex format
+	UnsafeExportPrivKeyHex(uid string) (string, error)
 }
 
 // Option overrides keyring configuration options.
@@ -198,7 +224,7 @@ func (ks keystore) ExportPubKeyArmor(uid string) (string, error) {
 		return "", fmt.Errorf("no key to export with name: %s", uid)
 	}
 
-	return crypto.ArmorPubKeyBytes(CryptoCdc.MustMarshalBinaryBare(bz.GetPubKey()), string(bz.GetAlgo())), nil
+	return crypto.ArmorPubKeyBytes(legacy.Cdc.MustMarshalBinaryBare(bz.GetPubKey()), string(bz.GetAlgo())), nil
 }
 
 func (ks keystore) ExportPubKeyArmorByAddress(address sdk.Address) (string, error) {
@@ -240,7 +266,7 @@ func (ks keystore) ExportPrivateKeyObject(uid string) (types.PrivKey, error) {
 			return nil, err
 		}
 
-		priv, err = cryptoamino.PrivKeyFromBytes([]byte(linfo.PrivKeyArmor))
+		priv, err = legacy.PrivKeyFromBytes([]byte(linfo.PrivKeyArmor))
 		if err != nil {
 			return nil, err
 		}
@@ -289,7 +315,7 @@ func (ks keystore) ImportPubKey(uid string, armor string) error {
 		return err
 	}
 
-	pubKey, err := cryptoamino.PubKeyFromBytes(pubBytes)
+	pubKey, err := legacy.PubKeyFromBytes(pubBytes)
 	if err != nil {
 		return err
 	}
@@ -300,6 +326,15 @@ func (ks keystore) ImportPubKey(uid string, armor string) error {
 	}
 
 	return nil
+}
+
+// ImportInfo implements Importer.MigrateInfo.
+func (ks keystore) ImportInfo(oldInfo Info) error {
+	if _, err := ks.Key(oldInfo.GetName()); err == nil {
+		return fmt.Errorf("cannot overwrite key: %s", oldInfo.GetName())
+	}
+
+	return ks.writeInfo(oldInfo)
 }
 
 func (ks keystore) Sign(uid string, msg []byte) ([]byte, types.PubKey, error) {
@@ -316,7 +351,7 @@ func (ks keystore) Sign(uid string, msg []byte) ([]byte, types.PubKey, error) {
 			return nil, nil, fmt.Errorf("private key not available")
 		}
 
-		priv, err = cryptoamino.PrivKeyFromBytes([]byte(i.PrivKeyArmor))
+		priv, err = legacy.PrivKeyFromBytes([]byte(i.PrivKeyArmor))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -461,7 +496,7 @@ func (ks keystore) List() ([]Info, error) {
 	return res, nil
 }
 
-func (ks keystore) NewMnemonic(uid string, language Language, hdPath string, algo SignatureAlgo) (Info, string, error) {
+func (ks keystore) NewMnemonic(uid string, language Language, hdPath, bip39Passphrase string, algo SignatureAlgo) (Info, string, error) {
 	if language != English {
 		return nil, "", ErrUnsupportedLanguage
 	}
@@ -482,12 +517,16 @@ func (ks keystore) NewMnemonic(uid string, language Language, hdPath string, alg
 		return nil, "", err
 	}
 
-	info, err := ks.NewAccount(uid, mnemonic, DefaultBIP39Passphrase, hdPath, algo)
+	if bip39Passphrase == "" {
+		bip39Passphrase = DefaultBIP39Passphrase
+	}
+
+	info, err := ks.NewAccount(uid, mnemonic, bip39Passphrase, hdPath, algo)
 	if err != nil {
 		return nil, "", err
 	}
 
-	return info, mnemonic, err
+	return info, mnemonic, nil
 }
 
 func (ks keystore) NewAccount(uid string, mnemonic string, bip39Passphrase string, hdPath string, algo SignatureAlgo) (Info, error) {
@@ -502,6 +541,13 @@ func (ks keystore) NewAccount(uid string, mnemonic string, bip39Passphrase strin
 	}
 
 	privKey := algo.Generate()(derivedPriv)
+
+	// check if the a key already exists with the same address and return an error
+	// if found
+	address := sdk.AccAddress(privKey.PubKey().Address())
+	if _, err := ks.KeyByAddress(address); err == nil {
+		return nil, fmt.Errorf("account with address %s already exists in keyring, delete the key first if you want to recreate it", address)
+	}
 
 	return ks.writeLocalKey(uid, privKey, algo.Name())
 }
@@ -561,9 +607,10 @@ func SignWithLedger(info Info, msg []byte) (sig []byte, pub types.PubKey, err er
 
 func newOSBackendKeyringConfig(appName, dir string, buf io.Reader) keyring.Config {
 	return keyring.Config{
-		ServiceName:      appName,
-		FileDir:          dir,
-		FilePasswordFunc: newRealPrompt(dir, buf),
+		ServiceName:              appName,
+		FileDir:                  dir,
+		KeychainTrustApplication: true,
+		FilePasswordFunc:         newRealPrompt(dir, buf),
 	}
 }
 
@@ -696,7 +743,7 @@ func (ks keystore) writeLocalKey(name string, priv types.PrivKey, algo hd.PubKey
 	// encrypt private key using keyring
 	pub := priv.PubKey()
 
-	info := newLocalInfo(name, pub, string(CryptoCdc.MustMarshalBinaryBare(priv)), algo)
+	info := newLocalInfo(name, pub, string(legacy.Cdc.MustMarshalBinaryBare(priv)), algo)
 	if err := ks.writeInfo(info); err != nil {
 		return nil, err
 	}
@@ -772,6 +819,29 @@ func (ks keystore) writeMultisigKey(name string, pub types.PubKey) (Info, error)
 	}
 
 	return info, nil
+}
+
+type unsafeKeystore struct {
+	keystore
+}
+
+// NewUnsafe returns a new keyring that provides support for unsafe operations.
+func NewUnsafe(kr Keyring) UnsafeKeyring {
+	// The type assertion is against the only keystore
+	// implementation that is currently provided.
+	ks := kr.(keystore)
+
+	return unsafeKeystore{ks}
+}
+
+// UnsafeExportPrivKeyHex exports private keys in unarmored hexadecimal format.
+func (ks unsafeKeystore) UnsafeExportPrivKeyHex(uid string) (privkey string, err error) {
+	priv, err := ks.ExportPrivateKeyObject(uid)
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(priv.Bytes()), nil
 }
 
 func addrHexKeyAsString(address sdk.Address) string {
