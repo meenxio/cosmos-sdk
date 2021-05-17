@@ -33,13 +33,13 @@ type ViewKeeper interface {
 
 // BaseViewKeeper implements a read only keeper implementation of ViewKeeper.
 type BaseViewKeeper struct {
-	cdc      codec.BinaryMarshaler
+	cdc      codec.BinaryCodec
 	storeKey sdk.StoreKey
 	ak       types.AccountKeeper
 }
 
 // NewBaseViewKeeper returns a new BaseViewKeeper.
-func NewBaseViewKeeper(cdc codec.BinaryMarshaler, storeKey sdk.StoreKey, ak types.AccountKeeper) BaseViewKeeper {
+func NewBaseViewKeeper(cdc codec.BinaryCodec, storeKey sdk.StoreKey, ak types.AccountKeeper) BaseViewKeeper {
 	return BaseViewKeeper{
 		cdc:      cdc,
 		storeKey: storeKey,
@@ -105,7 +105,7 @@ func (k BaseViewKeeper) GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom s
 	}
 
 	var balance sdk.Coin
-	k.cdc.MustUnmarshalBinaryBare(bz, &balance)
+	k.cdc.MustUnmarshal(bz, &balance)
 
 	return balance
 }
@@ -121,7 +121,7 @@ func (k BaseViewKeeper) IterateAccountBalances(ctx sdk.Context, addr sdk.AccAddr
 
 	for ; iterator.Valid(); iterator.Next() {
 		var balance sdk.Coin
-		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &balance)
+		k.cdc.MustUnmarshal(iterator.Value(), &balance)
 
 		if cb(balance) {
 			break
@@ -140,10 +140,16 @@ func (k BaseViewKeeper) IterateAllBalances(ctx sdk.Context, cb func(sdk.AccAddre
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		address := types.AddressFromBalancesStore(iterator.Key())
+		address, err := types.AddressFromBalancesStore(iterator.Key())
+		if err != nil {
+			k.Logger(ctx).With("key", iterator.Key(), "err", err).Error("failed to get address from balances store")
+			// TODO: revisit, for now, panic here to keep same behavior as in 0.42
+			// ref: https://github.com/cosmos/cosmos-sdk/issues/7409
+			panic(err)
+		}
 
 		var balance sdk.Coin
-		k.cdc.MustUnmarshalBinaryBare(iterator.Value(), &balance)
+		k.cdc.MustUnmarshal(iterator.Value(), &balance)
 
 		if cb(address, balance) {
 			break

@@ -18,18 +18,18 @@ var _ types.UnpackInterfacesMessage = &LegacyAminoPubKey{}
 // Multisig can be constructed with multiple same keys - it will increase the power of
 // the owner of that key (he will still need to add multiple signatures in the right order).
 // Panics if len(pubKeys) < k or 0 >= k.
-func NewLegacyAminoPubKey(k int, pubKeys []cryptotypes.PubKey) *LegacyAminoPubKey {
-	if k <= 0 {
+func NewLegacyAminoPubKey(threshold int, pubKeys []cryptotypes.PubKey) *LegacyAminoPubKey {
+	if threshold <= 0 {
 		panic("threshold k of n multisignature: k <= 0")
 	}
-	if len(pubKeys) < k {
+	if len(pubKeys) < threshold {
 		panic("threshold k of n multisignature: len(pubKeys) < k")
 	}
 	anyPubKeys, err := packPubKeys(pubKeys)
 	if err != nil {
 		panic(err)
 	}
-	return &LegacyAminoPubKey{Threshold: uint32(k), PubKeys: anyPubKeys}
+	return &LegacyAminoPubKey{Threshold: uint32(threshold), PubKeys: anyPubKeys}
 }
 
 // Address implements cryptotypes.PubKey Address method
@@ -39,7 +39,7 @@ func (m *LegacyAminoPubKey) Address() cryptotypes.Address {
 
 // Bytes returns the proto encoded version of the LegacyAminoPubKey
 func (m *LegacyAminoPubKey) Bytes() []byte {
-	return AminoCdc.MustMarshalBinaryBare(m)
+	return AminoCdc.MustMarshal(m)
 }
 
 // VerifyMultisignature implements the multisigtypes.PubKey VerifyMultisignature method.

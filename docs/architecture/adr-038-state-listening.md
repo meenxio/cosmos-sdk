@@ -33,7 +33,7 @@ type WriteListener interface {
 	// if value is nil then it was deleted
 	// storeKey indicates the source KVStore, to facilitate using the the same WriteListener across separate KVStores
 	// set bool indicates if it was a set; true: set, false: delete
-	OnWrite(storeKey types.StoreKey, set bool, key []byte, value []byte)
+    OnWrite(storeKey StoreKey, key []byte, value []byte, delete bool) error
 }
 ```
 
@@ -60,11 +60,11 @@ message StoreKVPair {
 // protobuf encoded StoreKVPairs to an underlying io.Writer
 type StoreKVPairWriteListener struct {
 	writer io.Writer
-	marshaller codec.BinaryMarshaler
+	marshaller codec.BinaryCodec
 }
 
-// NewStoreKVPairWriteListener wraps creates a StoreKVPairWriteListener with a provdied io.Writer and codec.BinaryMarshaler
-func NewStoreKVPairWriteListener(w io.Writer, m codec.BinaryMarshaler) *StoreKVPairWriteListener {
+// NewStoreKVPairWriteListener wraps creates a StoreKVPairWriteListener with a provdied io.Writer and codec.BinaryCodec
+func NewStoreKVPairWriteListener(w io.Writer, m codec.BinaryCodec) *StoreKVPairWriteListener {
 	return &StoreKVPairWriteListener{
 		writer: w,
 		marshaller: m,
@@ -72,15 +72,20 @@ func NewStoreKVPairWriteListener(w io.Writer, m codec.BinaryMarshaler) *StoreKVP
 }
 
 // OnWrite satisfies the WriteListener interface by writing length-prefixed protobuf encoded StoreKVPairs
-func (wl *StoreKVPairWriteListener) OnWrite(storeKey types.StoreKey, set bool, key []byte, value []byte) {
+func (wl *StoreKVPairWriteListener) OnWrite(storeKey types.StoreKey, key []byte, value []byte, delete bool) error error {
 	kvPair := new(types.StoreKVPair)
 	kvPair.StoreKey = storeKey.Name()
-	kvPair.Set = set
+	kvPair.Delete = Delete
 	kvPair.Key = key
 	kvPair.Value = value
-	if by, err := wl.marshaller.MarshalBinaryLengthPrefixed(kvPair); err == nil {
-		wl.writer.Write(by)
+	by, err := wl.marshaller.MarshalBinaryLengthPrefixed(kvPair)
+	if err != nil {
+                return err
 	}
+        if _, err := wl.writer.Write(by); err != nil {
+        	return err
+        }
+        return nil
 }
 ```
 
@@ -110,20 +115,22 @@ func NewStore(parent types.KVStore, psk types.StoreKey, listeners []types.WriteL
 func (s *Store) Set(key []byte, value []byte) {
 	types.AssertValidKey(key)
 	s.parent.Set(key, value)
-	s.onWrite(true, key, value)
+	s.onWrite(false, key, value)
 }
 
 // Delete implements the KVStore interface. It traces a write operation and
 // delegates the Delete call to the parent KVStore.
 func (s *Store) Delete(key []byte) {
 	s.parent.Delete(key)
-	s.onWrite(false, key, nil)
+	s.onWrite(true, key, nil)
 }
 
 // onWrite writes a KVStore operation to all of the WriteListeners
-func (s *Store) onWrite(set bool, key, value []byte) {
+func (s *Store) onWrite(delete bool, key, value []byte) {
 	for _, l := range s.listeners {
-		l.OnWrite(s.parentStoreKey, set, key, value)
+		if err := l.OnWrite(s.parentStoreKey, key, value, delete); err != nil {
+                    // log error
+                }
 	}
 }
 ```
@@ -140,9 +147,9 @@ type MultiStore interface {
 	// ListeningEnabled returns if listening is enabled for the KVStore belonging the provided StoreKey
 	ListeningEnabled(key StoreKey) bool
 
-	// SetListeners sets the WriteListeners for the KVStore belonging to the provided StoreKey
+	// AddListeners adds WriteListeners for the KVStore belonging to the provided StoreKey
 	// It appends the listeners to a current set, if one already exists
-	SetListeners(key StoreKey, listeners []WriteListener)
+	AddListeners(key StoreKey, listeners []WriteListener)
 }
 ```
 
@@ -241,7 +248,7 @@ type FileStreamingService struct {
 	filePrefix string // optional prefix for each of the generated files
 	writeDir string // directory to write files into
 	dstFile *os.File // the current write output file
-	marshaller codec.BinaryMarshaler // marshaller used for re-marshalling the ABCI messages to write them out to the destination files
+	marshaller codec.BinaryCodec // marshaller used for re-marshalling the ABCI messages to write them out to the destination files
 	stateCache [][]byte // cache the protobuf binary encoded StoreKVPairs in the order they are received
 }
 ```
@@ -272,7 +279,7 @@ func (iw *intermediateWriter) Write(b []byte) (int, error) {
 }
 
 // NewFileStreamingService creates a new FileStreamingService for the provided writeDir, (optional) filePrefix, and storeKeys
-func NewFileStreamingService(writeDir, filePrefix string, storeKeys []sdk.StoreKey, m codec.BinaryMarshaler) (*FileStreamingService, error) {
+func NewFileStreamingService(writeDir, filePrefix string, storeKeys []sdk.StoreKey, m codec.BinaryCodec) (*FileStreamingService, error) {
 	listenChan := make(chan []byte, 0)
 	iw := NewIntermediateWriter(listenChan)
 	listener := listen.NewStoreKVPairWriteListener(iw, m)
@@ -342,7 +349,7 @@ func (fss *FileStreamingService) Stream(wg *sync.WaitGroup, quitChan <-chan stru
 			case <-quitChan:
 				return
                         case by := <-fss.srcChan:
-                        	append(fss.stateCache, by)
+                        	fss.stateCache = append(fss.stateCache, by)
 			}
 		}
 	}()
@@ -380,7 +387,7 @@ We will add a new method to the `BaseApp` to enable the registration of `Streami
 func (app *BaseApp) RegisterHooks(s StreamingService) {
 	// set the listeners for each StoreKey
 	for key, lis := range s.Listeners() {
-		app.cms.SetListeners(key, lis)
+		app.cms.AddListeners(key, lis)
 	}
 	// register the streaming service hooks within the BaseApp
 	// BaseApp will pass BeginBlock, DeliverTx, and EndBlock requests and responses to the streaming services to update their ABCI context using these hooks
@@ -398,7 +405,7 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 	...
 	
 	// Call the streaming service hooks with the BeginBlock messages
-	for _ hook := range app.hooks {
+	for _, hook := range app.hooks {
 		hook.ListenBeginBlock(app.deliverState.ctx, req, res)
 	}
 	
@@ -445,7 +452,7 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) abci.ResponseDeliverTx 
 	}
 	
 	// Call the streaming service hooks with the DeliverTx messages
-	for _, hook := range app.hook {
+	for _, hook := range app.hooks {
 		hook.ListenDeliverTx(app.deliverState.ctx, req, res)
 	}
 	

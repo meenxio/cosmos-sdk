@@ -27,18 +27,20 @@
     - [Query](#cosmos.auth.v1beta1.Query)
   
 - [cosmos/authz/v1beta1/authz.proto](#cosmos/authz/v1beta1/authz.proto)
-    - [AuthorizationGrant](#cosmos.authz.v1beta1.AuthorizationGrant)
     - [GenericAuthorization](#cosmos.authz.v1beta1.GenericAuthorization)
+    - [Grant](#cosmos.authz.v1beta1.Grant)
+  
+- [cosmos/authz/v1beta1/event.proto](#cosmos/authz/v1beta1/event.proto)
+    - [EventGrant](#cosmos.authz.v1beta1.EventGrant)
+    - [EventRevoke](#cosmos.authz.v1beta1.EventRevoke)
   
 - [cosmos/authz/v1beta1/genesis.proto](#cosmos/authz/v1beta1/genesis.proto)
     - [GenesisState](#cosmos.authz.v1beta1.GenesisState)
     - [GrantAuthorization](#cosmos.authz.v1beta1.GrantAuthorization)
   
 - [cosmos/authz/v1beta1/query.proto](#cosmos/authz/v1beta1/query.proto)
-    - [QueryAuthorizationRequest](#cosmos.authz.v1beta1.QueryAuthorizationRequest)
-    - [QueryAuthorizationResponse](#cosmos.authz.v1beta1.QueryAuthorizationResponse)
-    - [QueryAuthorizationsRequest](#cosmos.authz.v1beta1.QueryAuthorizationsRequest)
-    - [QueryAuthorizationsResponse](#cosmos.authz.v1beta1.QueryAuthorizationsResponse)
+    - [QueryGrantsRequest](#cosmos.authz.v1beta1.QueryGrantsRequest)
+    - [QueryGrantsResponse](#cosmos.authz.v1beta1.QueryGrantsResponse)
   
     - [Query](#cosmos.authz.v1beta1.Query)
   
@@ -55,12 +57,12 @@
     - [TxResponse](#cosmos.base.abci.v1beta1.TxResponse)
   
 - [cosmos/authz/v1beta1/tx.proto](#cosmos/authz/v1beta1/tx.proto)
-    - [MsgExecAuthorizedRequest](#cosmos.authz.v1beta1.MsgExecAuthorizedRequest)
-    - [MsgExecAuthorizedResponse](#cosmos.authz.v1beta1.MsgExecAuthorizedResponse)
-    - [MsgGrantAuthorizationRequest](#cosmos.authz.v1beta1.MsgGrantAuthorizationRequest)
-    - [MsgGrantAuthorizationResponse](#cosmos.authz.v1beta1.MsgGrantAuthorizationResponse)
-    - [MsgRevokeAuthorizationRequest](#cosmos.authz.v1beta1.MsgRevokeAuthorizationRequest)
-    - [MsgRevokeAuthorizationResponse](#cosmos.authz.v1beta1.MsgRevokeAuthorizationResponse)
+    - [MsgExec](#cosmos.authz.v1beta1.MsgExec)
+    - [MsgExecResponse](#cosmos.authz.v1beta1.MsgExecResponse)
+    - [MsgGrant](#cosmos.authz.v1beta1.MsgGrant)
+    - [MsgGrantResponse](#cosmos.authz.v1beta1.MsgGrantResponse)
+    - [MsgRevoke](#cosmos.authz.v1beta1.MsgRevoke)
+    - [MsgRevokeResponse](#cosmos.authz.v1beta1.MsgRevokeResponse)
   
     - [Msg](#cosmos.authz.v1beta1.Msg)
   
@@ -124,6 +126,36 @@
   
     - [ReflectionService](#cosmos.base.reflection.v1beta1.ReflectionService)
   
+- [cosmos/base/reflection/v2alpha1/reflection.proto](#cosmos/base/reflection/v2alpha1/reflection.proto)
+    - [AppDescriptor](#cosmos.base.reflection.v2alpha1.AppDescriptor)
+    - [AuthnDescriptor](#cosmos.base.reflection.v2alpha1.AuthnDescriptor)
+    - [ChainDescriptor](#cosmos.base.reflection.v2alpha1.ChainDescriptor)
+    - [CodecDescriptor](#cosmos.base.reflection.v2alpha1.CodecDescriptor)
+    - [ConfigurationDescriptor](#cosmos.base.reflection.v2alpha1.ConfigurationDescriptor)
+    - [GetAuthnDescriptorRequest](#cosmos.base.reflection.v2alpha1.GetAuthnDescriptorRequest)
+    - [GetAuthnDescriptorResponse](#cosmos.base.reflection.v2alpha1.GetAuthnDescriptorResponse)
+    - [GetChainDescriptorRequest](#cosmos.base.reflection.v2alpha1.GetChainDescriptorRequest)
+    - [GetChainDescriptorResponse](#cosmos.base.reflection.v2alpha1.GetChainDescriptorResponse)
+    - [GetCodecDescriptorRequest](#cosmos.base.reflection.v2alpha1.GetCodecDescriptorRequest)
+    - [GetCodecDescriptorResponse](#cosmos.base.reflection.v2alpha1.GetCodecDescriptorResponse)
+    - [GetConfigurationDescriptorRequest](#cosmos.base.reflection.v2alpha1.GetConfigurationDescriptorRequest)
+    - [GetConfigurationDescriptorResponse](#cosmos.base.reflection.v2alpha1.GetConfigurationDescriptorResponse)
+    - [GetQueryServicesDescriptorRequest](#cosmos.base.reflection.v2alpha1.GetQueryServicesDescriptorRequest)
+    - [GetQueryServicesDescriptorResponse](#cosmos.base.reflection.v2alpha1.GetQueryServicesDescriptorResponse)
+    - [GetTxDescriptorRequest](#cosmos.base.reflection.v2alpha1.GetTxDescriptorRequest)
+    - [GetTxDescriptorResponse](#cosmos.base.reflection.v2alpha1.GetTxDescriptorResponse)
+    - [InterfaceAcceptingMessageDescriptor](#cosmos.base.reflection.v2alpha1.InterfaceAcceptingMessageDescriptor)
+    - [InterfaceDescriptor](#cosmos.base.reflection.v2alpha1.InterfaceDescriptor)
+    - [InterfaceImplementerDescriptor](#cosmos.base.reflection.v2alpha1.InterfaceImplementerDescriptor)
+    - [MsgDescriptor](#cosmos.base.reflection.v2alpha1.MsgDescriptor)
+    - [QueryMethodDescriptor](#cosmos.base.reflection.v2alpha1.QueryMethodDescriptor)
+    - [QueryServiceDescriptor](#cosmos.base.reflection.v2alpha1.QueryServiceDescriptor)
+    - [QueryServicesDescriptor](#cosmos.base.reflection.v2alpha1.QueryServicesDescriptor)
+    - [SigningModeDescriptor](#cosmos.base.reflection.v2alpha1.SigningModeDescriptor)
+    - [TxDescriptor](#cosmos.base.reflection.v2alpha1.TxDescriptor)
+  
+    - [ReflectionService](#cosmos.base.reflection.v2alpha1.ReflectionService)
+  
 - [cosmos/base/snapshots/v1beta1/snapshot.proto](#cosmos/base/snapshots/v1beta1/snapshot.proto)
     - [Metadata](#cosmos.base.snapshots.v1beta1.Metadata)
     - [Snapshot](#cosmos.base.snapshots.v1beta1.Snapshot)
@@ -132,6 +164,9 @@
     - [CommitID](#cosmos.base.store.v1beta1.CommitID)
     - [CommitInfo](#cosmos.base.store.v1beta1.CommitInfo)
     - [StoreInfo](#cosmos.base.store.v1beta1.StoreInfo)
+  
+- [cosmos/base/store/v1beta1/listening.proto](#cosmos/base/store/v1beta1/listening.proto)
+    - [StoreKVPair](#cosmos.base.store.v1beta1.StoreKVPair)
   
 - [cosmos/base/store/v1beta1/snapshot.proto](#cosmos/base/store/v1beta1/snapshot.proto)
     - [SnapshotIAVLItem](#cosmos.base.store.v1beta1.SnapshotIAVLItem)
@@ -273,28 +308,27 @@
     - [Msg](#cosmos.evidence.v1beta1.Msg)
   
 - [cosmos/feegrant/v1beta1/feegrant.proto](#cosmos/feegrant/v1beta1/feegrant.proto)
-    - [BasicFeeAllowance](#cosmos.feegrant.v1beta1.BasicFeeAllowance)
-    - [Duration](#cosmos.feegrant.v1beta1.Duration)
-    - [ExpiresAt](#cosmos.feegrant.v1beta1.ExpiresAt)
-    - [FeeAllowanceGrant](#cosmos.feegrant.v1beta1.FeeAllowanceGrant)
-    - [PeriodicFeeAllowance](#cosmos.feegrant.v1beta1.PeriodicFeeAllowance)
+    - [AllowedMsgAllowance](#cosmos.feegrant.v1beta1.AllowedMsgAllowance)
+    - [BasicAllowance](#cosmos.feegrant.v1beta1.BasicAllowance)
+    - [Grant](#cosmos.feegrant.v1beta1.Grant)
+    - [PeriodicAllowance](#cosmos.feegrant.v1beta1.PeriodicAllowance)
   
 - [cosmos/feegrant/v1beta1/genesis.proto](#cosmos/feegrant/v1beta1/genesis.proto)
     - [GenesisState](#cosmos.feegrant.v1beta1.GenesisState)
   
 - [cosmos/feegrant/v1beta1/query.proto](#cosmos/feegrant/v1beta1/query.proto)
-    - [QueryFeeAllowanceRequest](#cosmos.feegrant.v1beta1.QueryFeeAllowanceRequest)
-    - [QueryFeeAllowanceResponse](#cosmos.feegrant.v1beta1.QueryFeeAllowanceResponse)
-    - [QueryFeeAllowancesRequest](#cosmos.feegrant.v1beta1.QueryFeeAllowancesRequest)
-    - [QueryFeeAllowancesResponse](#cosmos.feegrant.v1beta1.QueryFeeAllowancesResponse)
+    - [QueryAllowanceRequest](#cosmos.feegrant.v1beta1.QueryAllowanceRequest)
+    - [QueryAllowanceResponse](#cosmos.feegrant.v1beta1.QueryAllowanceResponse)
+    - [QueryAllowancesRequest](#cosmos.feegrant.v1beta1.QueryAllowancesRequest)
+    - [QueryAllowancesResponse](#cosmos.feegrant.v1beta1.QueryAllowancesResponse)
   
     - [Query](#cosmos.feegrant.v1beta1.Query)
   
 - [cosmos/feegrant/v1beta1/tx.proto](#cosmos/feegrant/v1beta1/tx.proto)
-    - [MsgGrantFeeAllowance](#cosmos.feegrant.v1beta1.MsgGrantFeeAllowance)
-    - [MsgGrantFeeAllowanceResponse](#cosmos.feegrant.v1beta1.MsgGrantFeeAllowanceResponse)
-    - [MsgRevokeFeeAllowance](#cosmos.feegrant.v1beta1.MsgRevokeFeeAllowance)
-    - [MsgRevokeFeeAllowanceResponse](#cosmos.feegrant.v1beta1.MsgRevokeFeeAllowanceResponse)
+    - [MsgGrantAllowance](#cosmos.feegrant.v1beta1.MsgGrantAllowance)
+    - [MsgGrantAllowanceResponse](#cosmos.feegrant.v1beta1.MsgGrantAllowanceResponse)
+    - [MsgRevokeAllowance](#cosmos.feegrant.v1beta1.MsgRevokeAllowance)
+    - [MsgRevokeAllowanceResponse](#cosmos.feegrant.v1beta1.MsgRevokeAllowanceResponse)
   
     - [Msg](#cosmos.feegrant.v1beta1.Msg)
   
@@ -546,6 +580,7 @@
     - [DelayedVestingAccount](#cosmos.vesting.v1beta1.DelayedVestingAccount)
     - [Period](#cosmos.vesting.v1beta1.Period)
     - [PeriodicVestingAccount](#cosmos.vesting.v1beta1.PeriodicVestingAccount)
+    - [PermanentLockedAccount](#cosmos.vesting.v1beta1.PermanentLockedAccount)
   
 - [Scalar Value Types](#scalar-value-types)
 
@@ -680,6 +715,7 @@ pagination. Ex:
 | `offset` | [uint64](#uint64) |  | offset is a numeric offset that can be used when key is unavailable. It is less efficient than using key. Only one of offset or key should be set. |
 | `limit` | [uint64](#uint64) |  | limit is the total number of results to be returned in the result page. If left empty it will default to a value to be set by each app. |
 | `count_total` | [bool](#bool) |  | count_total is set to true to indicate that the result set should include a count of the total number of items available for pagination in UIs. count_total is only respected when offset is used. It is ignored when key is set. |
+| `reverse` | [bool](#bool) |  | reverse is set to true if results are to be returned in the descending order. |
 
 
 
@@ -838,10 +874,26 @@ Query defines the gRPC querier service.
 
 
 
-<a name="cosmos.authz.v1beta1.AuthorizationGrant"></a>
+<a name="cosmos.authz.v1beta1.GenericAuthorization"></a>
 
-### AuthorizationGrant
-AuthorizationGrant gives permissions to execute
+### GenericAuthorization
+GenericAuthorization gives the grantee unrestricted permissions to execute
+the provided method on behalf of the granter's account.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `msg` | [string](#string) |  | Msg, identified by it's type URL, to grant unrestricted permissions to execute |
+
+
+
+
+
+
+<a name="cosmos.authz.v1beta1.Grant"></a>
+
+### Grant
+Grant gives permissions to execute
 the provide method with expiration time.
 
 
@@ -854,17 +906,51 @@ the provide method with expiration time.
 
 
 
+ <!-- end messages -->
 
-<a name="cosmos.authz.v1beta1.GenericAuthorization"></a>
+ <!-- end enums -->
 
-### GenericAuthorization
-GenericAuthorization gives the grantee unrestricted permissions to execute
-the provided method on behalf of the granter's account.
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="cosmos/authz/v1beta1/event.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmos/authz/v1beta1/event.proto
+
+
+
+<a name="cosmos.authz.v1beta1.EventGrant"></a>
+
+### EventGrant
+EventGrant is emitted on Msg/Grant
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `method_name` | [string](#string) |  | method name to grant unrestricted permissions to execute Note: MethodName() is already a method on `GenericAuthorization` type, we need some custom naming here so using `MessageName` |
+| `msg_type_url` | [string](#string) |  | Msg type URL for which an autorization is granted |
+| `granter` | [string](#string) |  | Granter account address |
+| `grantee` | [string](#string) |  | Grantee account address |
+
+
+
+
+
+
+<a name="cosmos.authz.v1beta1.EventRevoke"></a>
+
+### EventRevoke
+EventRevoke is emitted on Msg/Revoke
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `msg_type_url` | [string](#string) |  | Msg type URL for which an autorization is revoked |
+| `granter` | [string](#string) |  | Granter account address |
+| `grantee` | [string](#string) |  | Grantee account address |
 
 
 
@@ -936,48 +1022,17 @@ GrantAuthorization defines the GenesisState/GrantAuthorization type.
 
 
 
-<a name="cosmos.authz.v1beta1.QueryAuthorizationRequest"></a>
+<a name="cosmos.authz.v1beta1.QueryGrantsRequest"></a>
 
-### QueryAuthorizationRequest
-QueryAuthorizationRequest is the request type for the Query/Authorization RPC method.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `granter` | [string](#string) |  |  |
-| `grantee` | [string](#string) |  |  |
-| `method_name` | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="cosmos.authz.v1beta1.QueryAuthorizationResponse"></a>
-
-### QueryAuthorizationResponse
-QueryAuthorizationResponse is the response type for the Query/Authorization RPC method.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `authorization` | [AuthorizationGrant](#cosmos.authz.v1beta1.AuthorizationGrant) |  | authorization is a authorization granted for grantee by granter. |
-
-
-
-
-
-
-<a name="cosmos.authz.v1beta1.QueryAuthorizationsRequest"></a>
-
-### QueryAuthorizationsRequest
-QueryAuthorizationsRequest is the request type for the Query/Authorizations RPC method.
+### QueryGrantsRequest
+QueryGrantsRequest is the request type for the Query/Grants RPC method.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `granter` | [string](#string) |  |  |
 | `grantee` | [string](#string) |  |  |
+| `msg_type_url` | [string](#string) |  | Optional, msg_type_url, when set, will query only grants matching given msg type. |
 | `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an pagination for the request. |
 
 
@@ -985,15 +1040,15 @@ QueryAuthorizationsRequest is the request type for the Query/Authorizations RPC 
 
 
 
-<a name="cosmos.authz.v1beta1.QueryAuthorizationsResponse"></a>
+<a name="cosmos.authz.v1beta1.QueryGrantsResponse"></a>
 
-### QueryAuthorizationsResponse
-QueryAuthorizationsResponse is the response type for the Query/Authorizations RPC method.
+### QueryGrantsResponse
+QueryGrantsResponse is the response type for the Query/Authorizations RPC method.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `authorizations` | [AuthorizationGrant](#cosmos.authz.v1beta1.AuthorizationGrant) | repeated | authorizations is a list of grants granted for grantee by granter. |
+| `grants` | [Grant](#cosmos.authz.v1beta1.Grant) | repeated | authorizations is a list of grants granted for grantee by granter. |
 | `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines an pagination for the response. |
 
 
@@ -1014,8 +1069,7 @@ Query defines the gRPC querier service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Authorization` | [QueryAuthorizationRequest](#cosmos.authz.v1beta1.QueryAuthorizationRequest) | [QueryAuthorizationResponse](#cosmos.authz.v1beta1.QueryAuthorizationResponse) | Returns any `Authorization` (or `nil`), with the expiration time, granted to the grantee by the granter for the provided msg type. | GET|/cosmos/authz/v1beta1/granters/{granter}/grantees/{grantee}/grant|
-| `Authorizations` | [QueryAuthorizationsRequest](#cosmos.authz.v1beta1.QueryAuthorizationsRequest) | [QueryAuthorizationsResponse](#cosmos.authz.v1beta1.QueryAuthorizationsResponse) | Returns list of `Authorization`, granted to the grantee by the granter. | GET|/cosmos/authz/v1beta1/granters/{granter}/grantees/{grantee}/grants|
+| `Grants` | [QueryGrantsRequest](#cosmos.authz.v1beta1.QueryGrantsRequest) | [QueryGrantsResponse](#cosmos.authz.v1beta1.QueryGrantsResponse) | Returns list of `Authorization`, granted to the grantee by the granter. | GET|/cosmos/authz/v1beta1/grants|
 
  <!-- end services -->
 
@@ -1225,10 +1279,10 @@ tags are stringified and the log is JSON decoded.
 
 
 
-<a name="cosmos.authz.v1beta1.MsgExecAuthorizedRequest"></a>
+<a name="cosmos.authz.v1beta1.MsgExec"></a>
 
-### MsgExecAuthorizedRequest
-MsgExecAuthorizedRequest attempts to execute the provided messages using
+### MsgExec
+MsgExec attempts to execute the provided messages using
 authorizations granted to the grantee. Each message should have only
 one signer corresponding to the granter of the authorization.
 
@@ -1236,17 +1290,17 @@ one signer corresponding to the granter of the authorization.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `grantee` | [string](#string) |  |  |
-| `msgs` | [google.protobuf.Any](#google.protobuf.Any) | repeated |  |
+| `msgs` | [google.protobuf.Any](#google.protobuf.Any) | repeated | Authorization Msg requests to execute. Each msg must implement Authorization interface The x/authz will try to find a grant matching (msg.signers[0], grantee, MsgTypeURL(msg)) triple and validate it. |
 
 
 
 
 
 
-<a name="cosmos.authz.v1beta1.MsgExecAuthorizedResponse"></a>
+<a name="cosmos.authz.v1beta1.MsgExecResponse"></a>
 
-### MsgExecAuthorizedResponse
-MsgExecAuthorizedResponse defines the Msg/MsgExecAuthorizedResponse response type.
+### MsgExecResponse
+MsgExecResponse defines the Msg/MsgExecResponse response type.
 
 
 | Field | Type | Label | Description |
@@ -1258,10 +1312,10 @@ MsgExecAuthorizedResponse defines the Msg/MsgExecAuthorizedResponse response typ
 
 
 
-<a name="cosmos.authz.v1beta1.MsgGrantAuthorizationRequest"></a>
+<a name="cosmos.authz.v1beta1.MsgGrant"></a>
 
-### MsgGrantAuthorizationRequest
-MsgGrantAuthorizationRequest grants the provided authorization to the grantee on the granter's
+### MsgGrant
+MsgGrant grants the provided authorization to the grantee on the granter's
 account with the provided expiration time.
 
 
@@ -1269,28 +1323,27 @@ account with the provided expiration time.
 | ----- | ---- | ----- | ----------- |
 | `granter` | [string](#string) |  |  |
 | `grantee` | [string](#string) |  |  |
-| `authorization` | [google.protobuf.Any](#google.protobuf.Any) |  |  |
-| `expiration` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+| `grant` | [Grant](#cosmos.authz.v1beta1.Grant) |  |  |
 
 
 
 
 
 
-<a name="cosmos.authz.v1beta1.MsgGrantAuthorizationResponse"></a>
+<a name="cosmos.authz.v1beta1.MsgGrantResponse"></a>
 
-### MsgGrantAuthorizationResponse
-MsgGrantAuthorizationResponse defines the Msg/MsgGrantAuthorization response type.
-
-
+### MsgGrantResponse
+MsgGrantResponse defines the Msg/MsgGrant response type.
 
 
 
 
-<a name="cosmos.authz.v1beta1.MsgRevokeAuthorizationRequest"></a>
 
-### MsgRevokeAuthorizationRequest
-MsgRevokeAuthorizationRequest revokes any authorization with the provided sdk.Msg type on the
+
+<a name="cosmos.authz.v1beta1.MsgRevoke"></a>
+
+### MsgRevoke
+MsgRevoke revokes any authorization with the provided sdk.Msg type on the
 granter's account with that has been granted to the grantee.
 
 
@@ -1298,17 +1351,17 @@ granter's account with that has been granted to the grantee.
 | ----- | ---- | ----- | ----------- |
 | `granter` | [string](#string) |  |  |
 | `grantee` | [string](#string) |  |  |
-| `method_name` | [string](#string) |  |  |
+| `msg_type_url` | [string](#string) |  |  |
 
 
 
 
 
 
-<a name="cosmos.authz.v1beta1.MsgRevokeAuthorizationResponse"></a>
+<a name="cosmos.authz.v1beta1.MsgRevokeResponse"></a>
 
-### MsgRevokeAuthorizationResponse
-MsgRevokeAuthorizationResponse defines the Msg/MsgRevokeAuthorizationResponse response type.
+### MsgRevokeResponse
+MsgRevokeResponse defines the Msg/MsgRevokeResponse response type.
 
 
 
@@ -1328,9 +1381,9 @@ Msg defines the authz Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `GrantAuthorization` | [MsgGrantAuthorizationRequest](#cosmos.authz.v1beta1.MsgGrantAuthorizationRequest) | [MsgGrantAuthorizationResponse](#cosmos.authz.v1beta1.MsgGrantAuthorizationResponse) | GrantAuthorization grants the provided authorization to the grantee on the granter's account with the provided expiration time. | |
-| `ExecAuthorized` | [MsgExecAuthorizedRequest](#cosmos.authz.v1beta1.MsgExecAuthorizedRequest) | [MsgExecAuthorizedResponse](#cosmos.authz.v1beta1.MsgExecAuthorizedResponse) | ExecAuthorized attempts to execute the provided messages using authorizations granted to the grantee. Each message should have only one signer corresponding to the granter of the authorization. | |
-| `RevokeAuthorization` | [MsgRevokeAuthorizationRequest](#cosmos.authz.v1beta1.MsgRevokeAuthorizationRequest) | [MsgRevokeAuthorizationResponse](#cosmos.authz.v1beta1.MsgRevokeAuthorizationResponse) | RevokeAuthorization revokes any authorization corresponding to the provided method name on the granter's account that has been granted to the grantee. | |
+| `Grant` | [MsgGrant](#cosmos.authz.v1beta1.MsgGrant) | [MsgGrantResponse](#cosmos.authz.v1beta1.MsgGrantResponse) | Grant grants the provided authorization to the grantee on the granter's account with the provided expiration time. | |
+| `Exec` | [MsgExec](#cosmos.authz.v1beta1.MsgExec) | [MsgExecResponse](#cosmos.authz.v1beta1.MsgExecResponse) | Exec attempts to execute the provided messages using authorizations granted to the grantee. Each message should have only one signer corresponding to the granter of the authorization. | |
+| `Revoke` | [MsgRevoke](#cosmos.authz.v1beta1.MsgRevoke) | [MsgRevokeResponse](#cosmos.authz.v1beta1.MsgRevokeResponse) | Revoke revokes any authorization corresponding to the provided method name on the granter's account that has been granted to the grantee. | |
 
  <!-- end services -->
 
@@ -1623,7 +1676,7 @@ GenesisState defines the bank module's genesis state.
 | ----- | ---- | ----- | ----------- |
 | `params` | [Params](#cosmos.bank.v1beta1.Params) |  | params defines all the paramaters of the module. |
 | `balances` | [Balance](#cosmos.bank.v1beta1.Balance) | repeated | balances is an array containing the balances of all the accounts. |
-| `supply` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | supply represents the total supply. |
+| `supply` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | supply represents the total supply. If it is left empty, then supply will be calculated based on the provided balances. Otherwise, it will be used to validate that the sum of the balances equals this amount. |
 | `denom_metadata` | [Metadata](#cosmos.bank.v1beta1.Metadata) | repeated | denom_metadata defines the metadata of the differents coins. |
 
 
@@ -1836,6 +1889,11 @@ QueryTotalSupplyRequest is the request type for the Query/TotalSupply RPC
 method.
 
 
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
+
+
 
 
 
@@ -1850,6 +1908,7 @@ method
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `supply` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | supply is the supply of the coins |
+| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
 
 
 
@@ -2092,6 +2151,419 @@ ReflectionService defines a service for interface reflection.
 
 
 
+<a name="cosmos/base/reflection/v2alpha1/reflection.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmos/base/reflection/v2alpha1/reflection.proto
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.AppDescriptor"></a>
+
+### AppDescriptor
+AppDescriptor describes a cosmos-sdk based application
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authn` | [AuthnDescriptor](#cosmos.base.reflection.v2alpha1.AuthnDescriptor) |  | AuthnDescriptor provides information on how to authenticate transactions on the application NOTE: experimental and subject to change in future releases. |
+| `chain` | [ChainDescriptor](#cosmos.base.reflection.v2alpha1.ChainDescriptor) |  | chain provides the chain descriptor |
+| `codec` | [CodecDescriptor](#cosmos.base.reflection.v2alpha1.CodecDescriptor) |  | codec provides metadata information regarding codec related types |
+| `configuration` | [ConfigurationDescriptor](#cosmos.base.reflection.v2alpha1.ConfigurationDescriptor) |  | configuration provides metadata information regarding the sdk.Config type |
+| `query_services` | [QueryServicesDescriptor](#cosmos.base.reflection.v2alpha1.QueryServicesDescriptor) |  | query_services provides metadata information regarding the available queriable endpoints |
+| `tx` | [TxDescriptor](#cosmos.base.reflection.v2alpha1.TxDescriptor) |  | tx provides metadata information regarding how to send transactions to the given application |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.AuthnDescriptor"></a>
+
+### AuthnDescriptor
+AuthnDescriptor provides information on how to sign transactions without relying
+on the online RPCs GetTxMetadata and CombineUnsignedTxAndSignatures
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sign_modes` | [SigningModeDescriptor](#cosmos.base.reflection.v2alpha1.SigningModeDescriptor) | repeated | sign_modes defines the supported signature algorithm |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.ChainDescriptor"></a>
+
+### ChainDescriptor
+ChainDescriptor describes chain information of the application
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `id` | [string](#string) |  | id is the chain id |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.CodecDescriptor"></a>
+
+### CodecDescriptor
+CodecDescriptor describes the registered interfaces and provides metadata information on the types
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `interfaces` | [InterfaceDescriptor](#cosmos.base.reflection.v2alpha1.InterfaceDescriptor) | repeated | interfaces is a list of the registerted interfaces descriptors |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.ConfigurationDescriptor"></a>
+
+### ConfigurationDescriptor
+ConfigurationDescriptor contains metadata information on the sdk.Config
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `bech32_account_address_prefix` | [string](#string) |  | bech32_account_address_prefix is the account address prefix |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.GetAuthnDescriptorRequest"></a>
+
+### GetAuthnDescriptorRequest
+GetAuthnDescriptorRequest is the request used for the GetAuthnDescriptor RPC
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.GetAuthnDescriptorResponse"></a>
+
+### GetAuthnDescriptorResponse
+GetAuthnDescriptorResponse is the response returned by the GetAuthnDescriptor RPC
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authn` | [AuthnDescriptor](#cosmos.base.reflection.v2alpha1.AuthnDescriptor) |  | authn describes how to authenticate to the application when sending transactions |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.GetChainDescriptorRequest"></a>
+
+### GetChainDescriptorRequest
+GetChainDescriptorRequest is the request used for the GetChainDescriptor RPC
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.GetChainDescriptorResponse"></a>
+
+### GetChainDescriptorResponse
+GetChainDescriptorResponse is the response returned by the GetChainDescriptor RPC
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `chain` | [ChainDescriptor](#cosmos.base.reflection.v2alpha1.ChainDescriptor) |  | chain describes application chain information |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.GetCodecDescriptorRequest"></a>
+
+### GetCodecDescriptorRequest
+GetCodecDescriptorRequest is the request used for the GetCodecDescriptor RPC
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.GetCodecDescriptorResponse"></a>
+
+### GetCodecDescriptorResponse
+GetCodecDescriptorResponse is the response returned by the GetCodecDescriptor RPC
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `codec` | [CodecDescriptor](#cosmos.base.reflection.v2alpha1.CodecDescriptor) |  | codec describes the application codec such as registered interfaces and implementations |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.GetConfigurationDescriptorRequest"></a>
+
+### GetConfigurationDescriptorRequest
+GetConfigurationDescriptorRequest is the request used for the GetConfigurationDescriptor RPC
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.GetConfigurationDescriptorResponse"></a>
+
+### GetConfigurationDescriptorResponse
+GetConfigurationDescriptorResponse is the response returned by the GetConfigurationDescriptor RPC
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `config` | [ConfigurationDescriptor](#cosmos.base.reflection.v2alpha1.ConfigurationDescriptor) |  | config describes the application's sdk.Config |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.GetQueryServicesDescriptorRequest"></a>
+
+### GetQueryServicesDescriptorRequest
+GetQueryServicesDescriptorRequest is the request used for the GetQueryServicesDescriptor RPC
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.GetQueryServicesDescriptorResponse"></a>
+
+### GetQueryServicesDescriptorResponse
+GetQueryServicesDescriptorResponse is the response returned by the GetQueryServicesDescriptor RPC
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `queries` | [QueryServicesDescriptor](#cosmos.base.reflection.v2alpha1.QueryServicesDescriptor) |  | queries provides information on the available queryable services |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.GetTxDescriptorRequest"></a>
+
+### GetTxDescriptorRequest
+GetTxDescriptorRequest is the request used for the GetTxDescriptor RPC
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.GetTxDescriptorResponse"></a>
+
+### GetTxDescriptorResponse
+GetTxDescriptorResponse is the response returned by the GetTxDescriptor RPC
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `tx` | [TxDescriptor](#cosmos.base.reflection.v2alpha1.TxDescriptor) |  | tx provides information on msgs that can be forwarded to the application alongside the accepted transaction protobuf type |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.InterfaceAcceptingMessageDescriptor"></a>
+
+### InterfaceAcceptingMessageDescriptor
+InterfaceAcceptingMessageDescriptor describes a protobuf message which contains
+an interface represented as a google.protobuf.Any
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `fullname` | [string](#string) |  | fullname is the protobuf fullname of the type containing the interface |
+| `field_descriptor_names` | [string](#string) | repeated | field_descriptor_names is a list of the protobuf name (not fullname) of the field which contains the interface as google.protobuf.Any (the interface is the same, but it can be in multiple fields of the same proto message) |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.InterfaceDescriptor"></a>
+
+### InterfaceDescriptor
+InterfaceDescriptor describes the implementation of an interface
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `fullname` | [string](#string) |  | fullname is the name of the interface |
+| `interface_accepting_messages` | [InterfaceAcceptingMessageDescriptor](#cosmos.base.reflection.v2alpha1.InterfaceAcceptingMessageDescriptor) | repeated | interface_accepting_messages contains information regarding the proto messages which contain the interface as google.protobuf.Any field |
+| `interface_implementers` | [InterfaceImplementerDescriptor](#cosmos.base.reflection.v2alpha1.InterfaceImplementerDescriptor) | repeated | interface_implementers is a list of the descriptors of the interface implementers |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.InterfaceImplementerDescriptor"></a>
+
+### InterfaceImplementerDescriptor
+InterfaceImplementerDescriptor describes an interface implementer
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `fullname` | [string](#string) |  | fullname is the protobuf queryable name of the interface implementer |
+| `type_url` | [string](#string) |  | type_url defines the type URL used when marshalling the type as any this is required so we can provide type safe google.protobuf.Any marshalling and unmarshalling, making sure that we don't accept just 'any' type in our interface fields |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.MsgDescriptor"></a>
+
+### MsgDescriptor
+MsgDescriptor describes a cosmos-sdk message that can be delivered with a transaction
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `msg_type_url` | [string](#string) |  | msg_type_url contains the TypeURL of a sdk.Msg. |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.QueryMethodDescriptor"></a>
+
+### QueryMethodDescriptor
+QueryMethodDescriptor describes a queryable method of a query service
+no other info is provided beside method name and tendermint queryable path
+because it would be redundant with the grpc reflection service
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `name` | [string](#string) |  | name is the protobuf name (not fullname) of the method |
+| `full_query_path` | [string](#string) |  | full_query_path is the path that can be used to query this method via tendermint abci.Query |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.QueryServiceDescriptor"></a>
+
+### QueryServiceDescriptor
+QueryServiceDescriptor describes a cosmos-sdk queryable service
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `fullname` | [string](#string) |  | fullname is the protobuf fullname of the service descriptor |
+| `is_module` | [bool](#bool) |  | is_module describes if this service is actually exposed by an application's module |
+| `methods` | [QueryMethodDescriptor](#cosmos.base.reflection.v2alpha1.QueryMethodDescriptor) | repeated | methods provides a list of query service methods |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.QueryServicesDescriptor"></a>
+
+### QueryServicesDescriptor
+QueryServicesDescriptor contains the list of cosmos-sdk queriable services
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `query_services` | [QueryServiceDescriptor](#cosmos.base.reflection.v2alpha1.QueryServiceDescriptor) | repeated | query_services is a list of cosmos-sdk QueryServiceDescriptor |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.SigningModeDescriptor"></a>
+
+### SigningModeDescriptor
+SigningModeDescriptor provides information on a signing flow of the application
+NOTE(fdymylja): here we could go as far as providing an entire flow on how
+to sign a message given a SigningModeDescriptor, but it's better to think about
+this another time
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `name` | [string](#string) |  | name defines the unique name of the signing mode |
+| `number` | [int32](#int32) |  | number is the unique int32 identifier for the sign_mode enum |
+| `authn_info_provider_method_fullname` | [string](#string) |  | authn_info_provider_method_fullname defines the fullname of the method to call to get the metadata required to authenticate using the provided sign_modes |
+
+
+
+
+
+
+<a name="cosmos.base.reflection.v2alpha1.TxDescriptor"></a>
+
+### TxDescriptor
+TxDescriptor describes the accepted transaction type
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `fullname` | [string](#string) |  | fullname is the protobuf fullname of the raw transaction type (for instance the tx.Tx type) it is not meant to support polymorphism of transaction types, it is supposed to be used by reflection clients to understand if they can handle a specific transaction type in an application. |
+| `msgs` | [MsgDescriptor](#cosmos.base.reflection.v2alpha1.MsgDescriptor) | repeated | msgs lists the accepted application messages (sdk.Msg) |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="cosmos.base.reflection.v2alpha1.ReflectionService"></a>
+
+### ReflectionService
+ReflectionService defines a service for application reflection.
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `GetAuthnDescriptor` | [GetAuthnDescriptorRequest](#cosmos.base.reflection.v2alpha1.GetAuthnDescriptorRequest) | [GetAuthnDescriptorResponse](#cosmos.base.reflection.v2alpha1.GetAuthnDescriptorResponse) | GetAuthnDescriptor returns information on how to authenticate transactions in the application NOTE: this RPC is still experimental and might be subject to breaking changes or removal in future releases of the cosmos-sdk. | GET|/cosmos/base/reflection/v1beta1/app_descriptor/authn|
+| `GetChainDescriptor` | [GetChainDescriptorRequest](#cosmos.base.reflection.v2alpha1.GetChainDescriptorRequest) | [GetChainDescriptorResponse](#cosmos.base.reflection.v2alpha1.GetChainDescriptorResponse) | GetChainDescriptor returns the description of the chain | GET|/cosmos/base/reflection/v1beta1/app_descriptor/chain|
+| `GetCodecDescriptor` | [GetCodecDescriptorRequest](#cosmos.base.reflection.v2alpha1.GetCodecDescriptorRequest) | [GetCodecDescriptorResponse](#cosmos.base.reflection.v2alpha1.GetCodecDescriptorResponse) | GetCodecDescriptor returns the descriptor of the codec of the application | GET|/cosmos/base/reflection/v1beta1/app_descriptor/codec|
+| `GetConfigurationDescriptor` | [GetConfigurationDescriptorRequest](#cosmos.base.reflection.v2alpha1.GetConfigurationDescriptorRequest) | [GetConfigurationDescriptorResponse](#cosmos.base.reflection.v2alpha1.GetConfigurationDescriptorResponse) | GetConfigurationDescriptor returns the descriptor for the sdk.Config of the application | GET|/cosmos/base/reflection/v1beta1/app_descriptor/configuration|
+| `GetQueryServicesDescriptor` | [GetQueryServicesDescriptorRequest](#cosmos.base.reflection.v2alpha1.GetQueryServicesDescriptorRequest) | [GetQueryServicesDescriptorResponse](#cosmos.base.reflection.v2alpha1.GetQueryServicesDescriptorResponse) | GetQueryServicesDescriptor returns the available gRPC queryable services of the application | GET|/cosmos/base/reflection/v1beta1/app_descriptor/query_services|
+| `GetTxDescriptor` | [GetTxDescriptorRequest](#cosmos.base.reflection.v2alpha1.GetTxDescriptorRequest) | [GetTxDescriptorResponse](#cosmos.base.reflection.v2alpha1.GetTxDescriptorResponse) | GetTxDescriptor returns information on the used transaction object and available msgs that can be used | GET|/cosmos/base/reflection/v1beta1/app_descriptor/tx_descriptor|
+
+ <!-- end services -->
+
+
+
 <a name="cosmos/base/snapshots/v1beta1/snapshot.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -2194,6 +2666,42 @@ between a store name and the commit ID.
 | ----- | ---- | ----- | ----------- |
 | `name` | [string](#string) |  |  |
 | `commit_id` | [CommitID](#cosmos.base.store.v1beta1.CommitID) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="cosmos/base/store/v1beta1/listening.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmos/base/store/v1beta1/listening.proto
+
+
+
+<a name="cosmos.base.store.v1beta1.StoreKVPair"></a>
+
+### StoreKVPair
+StoreKVPair is a KVStore KVPair used for listening to state changes (Sets and Deletes)
+It optionally includes the StoreKey for the originating KVStore and a Boolean flag to distinguish between Sets and
+Deletes
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `store_key` | [string](#string) |  | the store key for the KVStore this pair originates from |
+| `delete` | [bool](#bool) |  | true indicates a delete operation, false indicates a set operation |
+| `key` | [bytes](#bytes) |  |  |
+| `value` | [bytes](#bytes) |  |  |
 
 
 
@@ -4036,88 +4544,70 @@ Msg defines the evidence Msg service.
 
 
 
-<a name="cosmos.feegrant.v1beta1.BasicFeeAllowance"></a>
+<a name="cosmos.feegrant.v1beta1.AllowedMsgAllowance"></a>
 
-### BasicFeeAllowance
-BasicFeeAllowance implements FeeAllowance with a one-time grant of tokens
-that optionally expires. The delegatee can use up to SpendLimit to cover fees.
+### AllowedMsgAllowance
+AllowedMsgAllowance creates allowance only for specified message types.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `allowance` | [google.protobuf.Any](#google.protobuf.Any) |  | allowance can be any of basic and filtered fee allowance. |
+| `allowed_messages` | [string](#string) | repeated | allowed_messages are the messages for which the grantee has the access. |
+
+
+
+
+
+
+<a name="cosmos.feegrant.v1beta1.BasicAllowance"></a>
+
+### BasicAllowance
+BasicAllowance implements Allowance with a one-time grant of tokens
+that optionally expires. The grantee can use up to SpendLimit to cover fees.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `spend_limit` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | spend_limit specifies the maximum amount of tokens that can be spent by this allowance and will be updated as tokens are spent. If it is empty, there is no spend limit and any amount of coins can be spent. |
-| `expiration` | [ExpiresAt](#cosmos.feegrant.v1beta1.ExpiresAt) |  | expiration specifies an optional time when this allowance expires |
+| `expiration` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | expiration specifies an optional time when this allowance expires |
 
 
 
 
 
 
-<a name="cosmos.feegrant.v1beta1.Duration"></a>
+<a name="cosmos.feegrant.v1beta1.Grant"></a>
 
-### Duration
-Duration is a span of a clock time or number of blocks.
-This is designed to be added to an ExpiresAt struct.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `duration` | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
-| `blocks` | [uint64](#uint64) |  |  |
-
-
-
-
-
-
-<a name="cosmos.feegrant.v1beta1.ExpiresAt"></a>
-
-### ExpiresAt
-ExpiresAt is a point in time where something expires.
-It may be *either* block time or block height
+### Grant
+Grant is stored in the KVStore to record a grant with full context
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
-| `height` | [int64](#int64) |  |  |
+| `granter` | [string](#string) |  | granter is the address of the user granting an allowance of their funds. |
+| `grantee` | [string](#string) |  | grantee is the address of the user being granted an allowance of another user's funds. |
+| `allowance` | [google.protobuf.Any](#google.protobuf.Any) |  | allowance can be any of basic and filtered fee allowance. |
 
 
 
 
 
 
-<a name="cosmos.feegrant.v1beta1.FeeAllowanceGrant"></a>
+<a name="cosmos.feegrant.v1beta1.PeriodicAllowance"></a>
 
-### FeeAllowanceGrant
-FeeAllowanceGrant is stored in the KVStore to record a grant with full context
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `granter` | [string](#string) |  |  |
-| `grantee` | [string](#string) |  |  |
-| `allowance` | [google.protobuf.Any](#google.protobuf.Any) |  |  |
-
-
-
-
-
-
-<a name="cosmos.feegrant.v1beta1.PeriodicFeeAllowance"></a>
-
-### PeriodicFeeAllowance
-PeriodicFeeAllowance extends FeeAllowance to allow for both a maximum cap,
+### PeriodicAllowance
+PeriodicAllowance extends Allowance to allow for both a maximum cap,
 as well as a limit per time period.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `basic` | [BasicFeeAllowance](#cosmos.feegrant.v1beta1.BasicFeeAllowance) |  | basic specifies a struct of `BasicFeeAllowance` |
-| `period` | [Duration](#cosmos.feegrant.v1beta1.Duration) |  | period specifies the time duration in which period_spend_limit coins can be spent before that allowance is reset |
+| `basic` | [BasicAllowance](#cosmos.feegrant.v1beta1.BasicAllowance) |  | basic specifies a struct of `BasicAllowance` |
+| `period` | [google.protobuf.Duration](#google.protobuf.Duration) |  | period specifies the time duration in which period_spend_limit coins can be spent before that allowance is reset |
 | `period_spend_limit` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | period_spend_limit specifies the maximum number of coins that can be spent in the period |
 | `period_can_spend` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | period_can_spend is the number of coins left to be spent before the period_reset time |
-| `period_reset` | [ExpiresAt](#cosmos.feegrant.v1beta1.ExpiresAt) |  | period_reset is the time at which this period resets and a new one begins, it is calculated from the start time of the first transaction after the last period ended |
+| `period_reset` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | period_reset is the time at which this period resets and a new one begins, it is calculated from the start time of the first transaction after the last period ended |
 
 
 
@@ -4148,7 +4638,7 @@ GenesisState contains a set of fee allowances, persisted from the store
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `fee_allowances` | [FeeAllowanceGrant](#cosmos.feegrant.v1beta1.FeeAllowanceGrant) | repeated |  |
+| `allowances` | [Grant](#cosmos.feegrant.v1beta1.Grant) | repeated |  |
 
 
 
@@ -4171,41 +4661,41 @@ GenesisState contains a set of fee allowances, persisted from the store
 
 
 
-<a name="cosmos.feegrant.v1beta1.QueryFeeAllowanceRequest"></a>
+<a name="cosmos.feegrant.v1beta1.QueryAllowanceRequest"></a>
 
-### QueryFeeAllowanceRequest
-QueryFeeAllowanceRequest is the request type for the Query/FeeAllowance RPC method.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `granter` | [string](#string) |  |  |
-| `grantee` | [string](#string) |  |  |
-
-
-
-
-
-
-<a name="cosmos.feegrant.v1beta1.QueryFeeAllowanceResponse"></a>
-
-### QueryFeeAllowanceResponse
-QueryFeeAllowanceResponse is the response type for the Query/FeeAllowance RPC method.
+### QueryAllowanceRequest
+QueryAllowanceRequest is the request type for the Query/Allowance RPC method.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `fee_allowance` | [FeeAllowanceGrant](#cosmos.feegrant.v1beta1.FeeAllowanceGrant) |  | fee_allowance is a fee_allowance granted for grantee by granter. |
+| `granter` | [string](#string) |  | granter is the address of the user granting an allowance of their funds. |
+| `grantee` | [string](#string) |  | grantee is the address of the user being granted an allowance of another user's funds. |
 
 
 
 
 
 
-<a name="cosmos.feegrant.v1beta1.QueryFeeAllowancesRequest"></a>
+<a name="cosmos.feegrant.v1beta1.QueryAllowanceResponse"></a>
 
-### QueryFeeAllowancesRequest
-QueryFeeAllowancesRequest is the request type for the Query/FeeAllowances RPC method.
+### QueryAllowanceResponse
+QueryAllowanceResponse is the response type for the Query/Allowance RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `allowance` | [Grant](#cosmos.feegrant.v1beta1.Grant) |  | allowance is a allowance granted for grantee by granter. |
+
+
+
+
+
+
+<a name="cosmos.feegrant.v1beta1.QueryAllowancesRequest"></a>
+
+### QueryAllowancesRequest
+QueryAllowancesRequest is the request type for the Query/Allowances RPC method.
 
 
 | Field | Type | Label | Description |
@@ -4218,15 +4708,15 @@ QueryFeeAllowancesRequest is the request type for the Query/FeeAllowances RPC me
 
 
 
-<a name="cosmos.feegrant.v1beta1.QueryFeeAllowancesResponse"></a>
+<a name="cosmos.feegrant.v1beta1.QueryAllowancesResponse"></a>
 
-### QueryFeeAllowancesResponse
-QueryFeeAllowancesResponse is the response type for the Query/FeeAllowances RPC method.
+### QueryAllowancesResponse
+QueryAllowancesResponse is the response type for the Query/Allowances RPC method.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `fee_allowances` | [FeeAllowanceGrant](#cosmos.feegrant.v1beta1.FeeAllowanceGrant) | repeated | fee_allowances are fee_allowance's granted for grantee by granter. |
+| `allowances` | [Grant](#cosmos.feegrant.v1beta1.Grant) | repeated | allowances are allowance's granted for grantee by granter. |
 | `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines an pagination for the response. |
 
 
@@ -4247,8 +4737,8 @@ Query defines the gRPC querier service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `FeeAllowance` | [QueryFeeAllowanceRequest](#cosmos.feegrant.v1beta1.QueryFeeAllowanceRequest) | [QueryFeeAllowanceResponse](#cosmos.feegrant.v1beta1.QueryFeeAllowanceResponse) | FeeAllowance returns fee granted to the grantee by the granter. | GET|/cosmos/feegrant/v1beta1/fee_allowance/{granter}/{grantee}|
-| `FeeAllowances` | [QueryFeeAllowancesRequest](#cosmos.feegrant.v1beta1.QueryFeeAllowancesRequest) | [QueryFeeAllowancesResponse](#cosmos.feegrant.v1beta1.QueryFeeAllowancesResponse) | FeeAllowances returns all the grants for address. | GET|/cosmos/feegrant/v1beta1/fee_allowances/{grantee}|
+| `Allowance` | [QueryAllowanceRequest](#cosmos.feegrant.v1beta1.QueryAllowanceRequest) | [QueryAllowanceResponse](#cosmos.feegrant.v1beta1.QueryAllowanceResponse) | Allowance returns fee granted to the grantee by the granter. | GET|/cosmos/feegrant/v1beta1/allowance/{granter}/{grantee}|
+| `Allowances` | [QueryAllowancesRequest](#cosmos.feegrant.v1beta1.QueryAllowancesRequest) | [QueryAllowancesResponse](#cosmos.feegrant.v1beta1.QueryAllowancesResponse) | Allowances returns all the grants for address. | GET|/cosmos/feegrant/v1beta1/allowances/{grantee}|
 
  <!-- end services -->
 
@@ -4261,54 +4751,54 @@ Query defines the gRPC querier service.
 
 
 
-<a name="cosmos.feegrant.v1beta1.MsgGrantFeeAllowance"></a>
+<a name="cosmos.feegrant.v1beta1.MsgGrantAllowance"></a>
 
-### MsgGrantFeeAllowance
-MsgGrantFeeAllowance adds permission for Grantee to spend up to Allowance
+### MsgGrantAllowance
+MsgGrantAllowance adds permission for Grantee to spend up to Allowance
 of fees from the account of Granter.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `granter` | [string](#string) |  |  |
-| `grantee` | [string](#string) |  |  |
-| `allowance` | [google.protobuf.Any](#google.protobuf.Any) |  |  |
+| `granter` | [string](#string) |  | granter is the address of the user granting an allowance of their funds. |
+| `grantee` | [string](#string) |  | grantee is the address of the user being granted an allowance of another user's funds. |
+| `allowance` | [google.protobuf.Any](#google.protobuf.Any) |  | allowance can be any of basic and filtered fee allowance. |
 
 
 
 
 
 
-<a name="cosmos.feegrant.v1beta1.MsgGrantFeeAllowanceResponse"></a>
+<a name="cosmos.feegrant.v1beta1.MsgGrantAllowanceResponse"></a>
 
-### MsgGrantFeeAllowanceResponse
-MsgGrantFeeAllowanceResponse defines the Msg/GrantFeeAllowanceResponse response type.
-
-
+### MsgGrantAllowanceResponse
+MsgGrantAllowanceResponse defines the Msg/GrantAllowanceResponse response type.
 
 
 
 
-<a name="cosmos.feegrant.v1beta1.MsgRevokeFeeAllowance"></a>
 
-### MsgRevokeFeeAllowance
-MsgRevokeFeeAllowance removes any existing FeeAllowance from Granter to Grantee.
+
+<a name="cosmos.feegrant.v1beta1.MsgRevokeAllowance"></a>
+
+### MsgRevokeAllowance
+MsgRevokeAllowance removes any existing Allowance from Granter to Grantee.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `granter` | [string](#string) |  |  |
-| `grantee` | [string](#string) |  |  |
+| `granter` | [string](#string) |  | granter is the address of the user granting an allowance of their funds. |
+| `grantee` | [string](#string) |  | grantee is the address of the user being granted an allowance of another user's funds. |
 
 
 
 
 
 
-<a name="cosmos.feegrant.v1beta1.MsgRevokeFeeAllowanceResponse"></a>
+<a name="cosmos.feegrant.v1beta1.MsgRevokeAllowanceResponse"></a>
 
-### MsgRevokeFeeAllowanceResponse
-MsgRevokeFeeAllowanceResponse defines the Msg/RevokeFeeAllowanceResponse response type.
+### MsgRevokeAllowanceResponse
+MsgRevokeAllowanceResponse defines the Msg/RevokeAllowanceResponse response type.
 
 
 
@@ -4328,8 +4818,8 @@ Msg defines the feegrant msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `GrantFeeAllowance` | [MsgGrantFeeAllowance](#cosmos.feegrant.v1beta1.MsgGrantFeeAllowance) | [MsgGrantFeeAllowanceResponse](#cosmos.feegrant.v1beta1.MsgGrantFeeAllowanceResponse) | GrantFeeAllowance grants fee allowance to the grantee on the granter's account with the provided expiration time. | |
-| `RevokeFeeAllowance` | [MsgRevokeFeeAllowance](#cosmos.feegrant.v1beta1.MsgRevokeFeeAllowance) | [MsgRevokeFeeAllowanceResponse](#cosmos.feegrant.v1beta1.MsgRevokeFeeAllowanceResponse) | RevokeFeeAllowance revokes any fee allowance of granter's account that has been granted to the grantee. | |
+| `GrantAllowance` | [MsgGrantAllowance](#cosmos.feegrant.v1beta1.MsgGrantAllowance) | [MsgGrantAllowanceResponse](#cosmos.feegrant.v1beta1.MsgGrantAllowanceResponse) | GrantAllowance grants fee allowance to the grantee on the granter's account with the provided expiration time. | |
+| `RevokeAllowance` | [MsgRevokeAllowance](#cosmos.feegrant.v1beta1.MsgRevokeAllowance) | [MsgRevokeAllowanceResponse](#cosmos.feegrant.v1beta1.MsgRevokeAllowanceResponse) | RevokeAllowance revokes any fee allowance of granter's account that has been granted to the grantee. | |
 
  <!-- end services -->
 
@@ -4991,7 +5481,7 @@ MsgVoteResponse defines the Msg/Vote response type.
 <a name="cosmos.gov.v1beta1.MsgVoteWeighted"></a>
 
 ### MsgVoteWeighted
-MsgVote defines a message to cast a vote.
+MsgVoteWeighted defines a message to cast a vote.
 
 
 | Field | Type | Label | Description |
@@ -5030,7 +5520,7 @@ Msg defines the bank Msg service.
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `SubmitProposal` | [MsgSubmitProposal](#cosmos.gov.v1beta1.MsgSubmitProposal) | [MsgSubmitProposalResponse](#cosmos.gov.v1beta1.MsgSubmitProposalResponse) | SubmitProposal defines a method to create new proposal given a content. | |
 | `Vote` | [MsgVote](#cosmos.gov.v1beta1.MsgVote) | [MsgVoteResponse](#cosmos.gov.v1beta1.MsgVoteResponse) | Vote defines a method to add a vote on a specific proposal. | |
-| `VoteWeighted` | [MsgVoteWeighted](#cosmos.gov.v1beta1.MsgVoteWeighted) | [MsgVoteWeightedResponse](#cosmos.gov.v1beta1.MsgVoteWeightedResponse) | WeightedVote defines a method to add a weighted vote on a specific proposal. | |
+| `VoteWeighted` | [MsgVoteWeighted](#cosmos.gov.v1beta1.MsgVoteWeighted) | [MsgVoteWeightedResponse](#cosmos.gov.v1beta1.MsgVoteWeightedResponse) | VoteWeighted defines a method to add a weighted vote on a specific proposal. | |
 | `Deposit` | [MsgDeposit](#cosmos.gov.v1beta1.MsgDeposit) | [MsgDepositResponse](#cosmos.gov.v1beta1.MsgDepositResponse) | Deposit defines a method to add deposit on a specific proposal. | |
 
  <!-- end services -->
@@ -5692,9 +6182,9 @@ AuthorizationType defines the type of staking module authorization type
 | Name | Number | Description |
 | ---- | ------ | ----------- |
 | AUTHORIZATION_TYPE_UNSPECIFIED | 0 | AUTHORIZATION_TYPE_UNSPECIFIED specifies an unknown authorization type |
-| AUTHORIZATION_TYPE_DELEGATE | 1 | AUTHORIZATION_TYPE_DELEGATE defines an authorization type for Msg/Delegate |
-| AUTHORIZATION_TYPE_UNDELEGATE | 2 | AUTHORIZATION_TYPE_UNDELEGATE defines an authorization type for Msg/Undelegate |
-| AUTHORIZATION_TYPE_REDELEGATE | 3 | AUTHORIZATION_TYPE_REDELEGATE defines an authorization type for Msg/BeginRedelegate |
+| AUTHORIZATION_TYPE_DELEGATE | 1 | AUTHORIZATION_TYPE_DELEGATE defines an authorization type for MsgDelegate |
+| AUTHORIZATION_TYPE_UNDELEGATE | 2 | AUTHORIZATION_TYPE_UNDELEGATE defines an authorization type for MsgUndelegate |
+| AUTHORIZATION_TYPE_REDELEGATE | 3 | AUTHORIZATION_TYPE_REDELEGATE defines an authorization type for MsgBeginRedelegate |
 
 
  <!-- end enums -->
@@ -5901,6 +6391,7 @@ Params defines the parameters for the staking module.
 | `max_entries` | [uint32](#uint32) |  | max_entries is the max entries for either unbonding delegation or redelegation (per pair/trio). |
 | `historical_entries` | [uint32](#uint32) |  | historical_entries is the number of historical entries to persist. |
 | `bond_denom` | [string](#string) |  | bond_denom defines the bondable coin denomination. |
+| `power_reduction` | [string](#string) |  | power_reduction is the amount of staking tokens required for 1 unit of consensus-engine power |
 
 
 
@@ -6676,7 +7167,7 @@ of coins from a delegator and source validator to a destination validator.
 <a name="cosmos.staking.v1beta1.MsgBeginRedelegateResponse"></a>
 
 ### MsgBeginRedelegateResponse
-MsgBeginRedelegateResponse defines the Msg/BeginRedelegate response type.
+MsgBeginRedelegateResponse defines the MsgBeginRedelegate response type.
 
 
 | Field | Type | Label | Description |
@@ -6712,7 +7203,7 @@ MsgCreateValidator defines a SDK message for creating a new validator.
 <a name="cosmos.staking.v1beta1.MsgCreateValidatorResponse"></a>
 
 ### MsgCreateValidatorResponse
-MsgCreateValidatorResponse defines the Msg/CreateValidator response type.
+MsgCreateValidatorResponse defines the MsgCreateValidator response type.
 
 
 
@@ -6740,7 +7231,7 @@ from a delegator to a validator.
 <a name="cosmos.staking.v1beta1.MsgDelegateResponse"></a>
 
 ### MsgDelegateResponse
-MsgDelegateResponse defines the Msg/Delegate response type.
+MsgDelegateResponse defines the MsgDelegate response type.
 
 
 
@@ -6768,7 +7259,7 @@ MsgEditValidator defines a SDK message for editing an existing validator.
 <a name="cosmos.staking.v1beta1.MsgEditValidatorResponse"></a>
 
 ### MsgEditValidatorResponse
-MsgEditValidatorResponse defines the Msg/EditValidator response type.
+MsgEditValidatorResponse defines the MsgEditValidator response type.
 
 
 
@@ -6796,7 +7287,7 @@ delegate and a validator.
 <a name="cosmos.staking.v1beta1.MsgUndelegateResponse"></a>
 
 ### MsgUndelegateResponse
-MsgUndelegateResponse defines the Msg/Undelegate response type.
+MsgUndelegateResponse defines the MsgUndelegate response type.
 
 
 | Field | Type | Label | Description |
@@ -7099,7 +7590,7 @@ TxBody is the body of a transaction that all signers sign over.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `messages` | [google.protobuf.Any](#google.protobuf.Any) | repeated | messages is a list of messages to be executed. The required signers of those messages define the number and order of elements in AuthInfo's signer_infos and Tx's signatures. Each required signer address is added to the list only the first time it occurs. By convention, the first required signer (usually from the first message) is referred to as the primary signer and pays the fee for the whole transaction. |
-| `memo` | [string](#string) |  | memo is any arbitrary memo to be added to the transaction |
+| `memo` | [string](#string) |  | memo is any arbitrary note/comment to be added to the transaction. WARNING: in clients, any publicly exposed text should not be called memo, but should be called `note` instead (see https://github.com/cosmos/cosmos-sdk/issues/9122). |
 | `timeout_height` | [uint64](#uint64) |  | timeout is the block height after which this transaction will not be processed by the chain |
 | `extension_options` | [google.protobuf.Any](#google.protobuf.Any) | repeated | extension_options are arbitrary options that can be added by chains when the default options are not sufficient. If any of these are present and can't be handled, the transaction will be rejected |
 | `non_critical_extension_options` | [google.protobuf.Any](#google.protobuf.Any) | repeated | extension_options are arbitrary options that can be added by chains when the default options are not sufficient. If any of these are present and can't be handled, they will be ignored |
@@ -7256,7 +7747,8 @@ RPC method.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `tx` | [Tx](#cosmos.tx.v1beta1.Tx) |  | tx is the transaction to simulate. |
+| `tx` | [Tx](#cosmos.tx.v1beta1.Tx) |  | **Deprecated.** tx is the transaction to simulate. Deprecated. Send raw tx bytes instead. |
+| `tx_bytes` | [bytes](#bytes) |  | tx_bytes is the raw transaction. |
 
 
 
@@ -7661,6 +8153,23 @@ periodically vests by unlocking coins during each specified period.
 | `base_vesting_account` | [BaseVestingAccount](#cosmos.vesting.v1beta1.BaseVestingAccount) |  |  |
 | `start_time` | [int64](#int64) |  |  |
 | `vesting_periods` | [Period](#cosmos.vesting.v1beta1.Period) | repeated |  |
+
+
+
+
+
+
+<a name="cosmos.vesting.v1beta1.PermanentLockedAccount"></a>
+
+### PermanentLockedAccount
+PermanentLockedAccount implements the VestingAccount interface. It does
+not ever release coins, locking them indefinitely. Coins in this account can
+still be used for delegating and for governance votes even while locked.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `base_vesting_account` | [BaseVestingAccount](#cosmos.vesting.v1beta1.BaseVestingAccount) |  |  |
 
 
 

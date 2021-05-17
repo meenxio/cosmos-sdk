@@ -3,13 +3,13 @@ package secp256r1
 import (
 	"testing"
 
+	"github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	proto "github.com/gogo/protobuf/proto"
-	"github.com/stretchr/testify/suite"
 )
 
 var _ cryptotypes.PrivKey = &PrivKey{}
@@ -41,7 +41,7 @@ func (suite *SKSuite) TestPubKey() {
 	suite.True(suite.sk.(*PrivKey).Secret.PublicKey.Equal(&pk.(*PubKey).Key.PublicKey))
 }
 
-func (suite *SKSuite) Bytes() {
+func (suite *SKSuite) TestBytes() {
 	bz := suite.sk.Bytes()
 	suite.Len(bz, fieldSize)
 	var sk *PrivKey
@@ -64,9 +64,9 @@ func (suite *SKSuite) TestMarshalProto() {
 	sk = PrivKey{}
 	registry := types.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
-	bz, err = cdc.MarshalBinaryBare(suite.sk.(*PrivKey))
+	bz, err = cdc.Marshal(suite.sk.(*PrivKey))
 	require.NoError(err)
-	require.NoError(cdc.UnmarshalBinaryBare(bz, &sk))
+	require.NoError(cdc.Unmarshal(bz, &sk))
 	require.True(sk.Equals(suite.sk))
 
 	const bufSize = 100

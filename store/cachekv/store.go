@@ -10,6 +10,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/internal/conv"
+	"github.com/cosmos/cosmos-sdk/store/listenkv"
 	"github.com/cosmos/cosmos-sdk/store/tracekv"
 	"github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -58,7 +59,7 @@ func (store *Store) Get(key []byte) (value []byte) {
 
 	types.AssertValidKey(key)
 
-	cacheValue, ok := store.cache[string(key)]
+	cacheValue, ok := store.cache[conv.UnsafeBytesToStr(key)]
 	if !ok {
 		value = store.parent.Get(key)
 		store.setCacheValue(key, value, false, false)
@@ -144,6 +145,11 @@ func (store *Store) CacheWrap() types.CacheWrap {
 // CacheWrapWithTrace implements the CacheWrapper interface.
 func (store *Store) CacheWrapWithTrace(w io.Writer, tc types.TraceContext) types.CacheWrap {
 	return NewStore(tracekv.NewStore(store, w, tc))
+}
+
+// CacheWrapWithListeners implements the CacheWrapper interface.
+func (store *Store) CacheWrapWithListeners(storeKey types.StoreKey, listeners []types.WriteListener) types.CacheWrap {
+	return NewStore(listenkv.NewStore(store, storeKey, listeners))
 }
 
 //----------------------------------------
@@ -232,12 +238,12 @@ func (store *Store) dirtyItems(start, end []byte) {
 
 // Only entrypoint to mutate store.cache.
 func (store *Store) setCacheValue(key, value []byte, deleted bool, dirty bool) {
-	store.cache[string(key)] = &cValue{
+	store.cache[conv.UnsafeBytesToStr(key)] = &cValue{
 		value:   value,
 		deleted: deleted,
 		dirty:   dirty,
 	}
 	if dirty {
-		store.unsortedCache[string(key)] = struct{}{}
+		store.unsortedCache[conv.UnsafeBytesToStr(key)] = struct{}{}
 	}
 }

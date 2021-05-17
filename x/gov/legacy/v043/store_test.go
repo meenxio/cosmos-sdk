@@ -16,7 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
-func TestStoreMigration(t *testing.T) {
+func TestMigrateStore(t *testing.T) {
 	cdc := simapp.MakeTestEncodingConfig().Marshaler
 	govKey := sdk.NewKVStoreKey("gov")
 	ctx := testutil.DefaultContext(govKey, sdk.NewTransientStoreKey("transient_test"))
@@ -29,9 +29,9 @@ func TestStoreMigration(t *testing.T) {
 	dummyValue := []byte("foo")
 	// Use real values for votes, as we're testing weighted votes.
 	oldVote := v040gov.Vote{ProposalId: 1, Voter: "foobar", Option: types.OptionNoWithVeto}
-	oldVoteValue := cdc.MustMarshalBinaryBare(&oldVote)
+	oldVoteValue := cdc.MustMarshal(&oldVote)
 	newVote := types.Vote{ProposalId: 1, Voter: "foobar", Options: types.WeightedVoteOptions{{Option: types.OptionNoWithVeto, Weight: sdk.NewDec(1)}}}
-	newVoteValue := cdc.MustMarshalBinaryBare(&newVote)
+	newVoteValue := cdc.MustMarshal(&newVote)
 
 	testCases := []struct {
 		name                               string
@@ -82,7 +82,7 @@ func TestStoreMigration(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			if bytes.Compare(tc.oldKey, tc.newKey) != 0 {
+			if !bytes.Equal(tc.oldKey, tc.newKey) {
 				require.Nil(t, store.Get(tc.oldKey))
 			}
 			require.Equal(t, tc.newValue, store.Get(tc.newKey))
